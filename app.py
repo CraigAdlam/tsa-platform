@@ -35,12 +35,35 @@ st.subheader("Skater Summary")
 st.sidebar.header("Filters")
 filtered_df = df.copy()
 
+# ---- Date Filter ----
+if "gameDate" in df.columns:
+    df["gameDate"] = pd.to_datetime(df["gameDate"], errors="coerce")
+
+    min_date = df["gameDate"].min()
+    max_date = df["gameDate"].max()
+
+    if pd.notna(min_date) and pd.notna(max_date):
+        date_range = st.sidebar.date_input(
+            "Game Date Range",
+            [min_date, max_date]
+        )
+
+        if len(date_range) == 2:
+            start_date, end_date = pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])
+
+            filtered_df = filtered_df[
+                (filtered_df["gameDate"] >= start_date) &
+                (filtered_df["gameDate"] <= end_date)
+            ]
+
+# ---- Team Filter ----
 if "teamAbbrev" in filtered_df.columns:
     teams = sorted(filtered_df["teamAbbrev"].dropna().astype(str).unique().tolist())
     selected_teams = st.sidebar.multiselect("Team", teams)
     if selected_teams:
         filtered_df = filtered_df[filtered_df["teamAbbrev"].astype(str).isin(selected_teams)]
 
+# ---- Skater Filter ----
 if "skaterFullName" in filtered_df.columns:
     search = st.sidebar.text_input("Search player")
     if search:
