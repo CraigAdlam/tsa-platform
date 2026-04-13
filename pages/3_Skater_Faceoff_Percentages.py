@@ -174,10 +174,22 @@ st.dataframe(
     height=table_height
 )
 
-st.download_button(
-    "Download filtered data",
-    filtered_df.to_csv(index=False),
-    "filtered_skater_faceoffpercentages.csv",
-    "text/csv",
-    key="faceoff_download"
-)
+col1, col2 = st.columns(2)
+
+with col1:
+    st.download_button(
+        "Filtered",
+        filtered_df.to_csv(index=False),
+        "filtered_skater_faceoffpercentages.csv",
+        "text/csv",
+        key="faceoff_download_filtered"
+    )
+
+with col2:
+    st.download_button(
+        "Full Dataset",
+        df.to_csv(index=False),
+        "full_skater_faceoffpercentages.csv",
+        "text/csv",
+        key="faceoff_download_full"
+    )

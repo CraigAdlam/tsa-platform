@@ -176,8 +176,6 @@ st.dataframe(
     height=table_height
 )
 
-st.markdown("### Download Options")
-
 col1, col2 = st.columns(2)
 
 with col1:

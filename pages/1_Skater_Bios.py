@@ -119,10 +119,22 @@ st.dataframe(
     height=table_height
 )
 
-st.download_button(
-    "Download filtered data",
-    filtered_df.to_csv(index=False),
-    "filtered_skater_bios.csv",
-    "text/csv",
-    key="bios_download"
-)
+col1, col2 = st.columns(2)
+
+with col1:
+    st.download_button(
+        "⬇️ Filtered",
+        filtered_df.to_csv(index=False),
+        "filtered_skater_bios.csv",
+        "text/csv",
+        key="bios_download_filtered"
+    )
+
+with col2:
+    st.download_button(
+        "⬇️ Full",
+        df.to_csv(index=False),
+        "full_skater_bios.csv",
+        "text/csv",
+        key="bios_download_full"
+    )
