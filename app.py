@@ -79,6 +79,10 @@ if "gameDate" in filtered_df.columns:
                 filtered_df = filtered_df[
                     filtered_df["gameDate"].between(start_date, end_date)
                 ]
+                
+# --- Row Limit OR Rows per page Filter ---
+# row_limit = st.sidebar.selectbox("Rows to display", [25, 50, 100, 250, 500, 1000], index=2)
+page_size = st.sidebar.selectbox("Rows per page", [10, 25, 50, 100], index=1)
 
 # ---- Team Filter ----
 if "teamAbbrev" in filtered_df.columns:
@@ -95,16 +99,7 @@ if "skaterFullName" in filtered_df.columns:
             filtered_df["skaterFullName"].astype(str).str.contains(search, case=False, na=False)
         ]
 
-if "summary_shots" in filtered_df.columns:
-    shots_numeric = pd.to_numeric(filtered_df["summary_shots"], errors="coerce")
-    min_val = int(shots_numeric.min()) if shots_numeric.notna().any() else 0
-    max_val = int(shots_numeric.max()) if shots_numeric.notna().any() else 0
-    min_shots = st.sidebar.slider("Minimum shots", min_val, max_val, min_val)
-    filtered_df = filtered_df[shots_numeric >= min_shots]
-
 ### --- WITHOUT PAGINATION ---------------------------------------------------------------------------------------------------
-# row_limit = st.sidebar.selectbox("Rows to display", [25, 50, 100, 250, 500, 1000], index=2)
-
 # st.write(f"Showing {min(len(filtered_df), row_limit):,} of {len(filtered_df):,} rows")
 
 # Option 1: Scrollable grid with limited visible rows, but inner scroll bar
@@ -135,8 +130,6 @@ if "summary_shots" in filtered_df.columns:
 
 ### --- WITH PAGINATION ---------------------------------------------------------------------------------------------------
 # ---- Pagination ----
-page_size = st.sidebar.selectbox("Rows per page", [10, 25, 50, 100], index=1)
-
 total_rows = len(filtered_df)
 total_pages = max(1, (total_rows + page_size - 1) // page_size)
 
