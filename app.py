@@ -29,6 +29,18 @@ def load_data():
 
 df = load_data()
 
+desired_order = [
+    "gameDate", "gameId", "skaterFullName", "playerId", "homeRoad",
+    "teamAbbrev", "opponentTeamAbbrev", "shootsCatches", "positionCode",
+    "gamesPlayed", "goals", "assists", "points", "plusMinus",
+    "penaltyMinutes", "pointsPerGame", "evGoals", "evPoints",
+    "ppGoals", "ppPoints", "shGoals", "shPoints", "otGoals",
+    "gameWinningGoals", "shots", "shootingPct",
+    "timeOnIcePerGame", "faceoffWinPct", "lastName"
+]
+
+df = df[[col for col in desired_order if col in df.columns]]
+
 if "gameDate" in df.columns:
     df["gameDate"] = pd.to_datetime(df["gameDate"], errors="coerce").dt.normalize()
 
