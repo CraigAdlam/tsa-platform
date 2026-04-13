@@ -65,12 +65,12 @@ if "gameDate" in filtered_df.columns:
         if date_mode == "Single date":
             selected_date = st.sidebar.date_input(
                 "Game Date",
-                value=max_date.date(),
-                min_value=min_date.date(),
-                max_value=max_date.date()
+                value=max_date,
+                min_value=min_date,
+                max_value=max_date
             )
 
-            selected_date = pd.to_datetime(selected_date).normalize()
+            selected_date = pd.to_datetime(selected_date).date()
 
             filtered_df = filtered_df[
                 filtered_df["gameDate"] == selected_date
