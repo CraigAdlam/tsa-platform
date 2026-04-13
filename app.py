@@ -42,7 +42,7 @@ desired_order = [
 df = df[[col for col in desired_order if col in df.columns]]
 
 if "gameDate" in df.columns:
-    df["gameDate"] = pd.to_datetime(df["gameDate"], errors="coerce").dt.normalize()
+    df["gameDate"] = pd.to_datetime(df["gameDate"], errors="coerce").dt.date
 
 # st.title("Top Shelf Analytics")
 st.subheader("Skater Summary")
