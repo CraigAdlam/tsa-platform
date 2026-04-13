@@ -161,7 +161,8 @@ start_idx = (st.session_state.page_num - 1) * page_size
 end_idx = start_idx + page_size
 page_df = filtered_df.iloc[start_idx:end_idx]
 
-st.write(f"Showing rows {start_idx + 1:,}–{min(end_idx, total_rows):,} of {total_rows:,}")
+# st.write(f"Showing rows {start_idx + 1:,}–{min(end_idx, total_rows):,} of {total_rows:,}")
+st.caption(f"Rows {start_idx + 1:,}–{min(end_idx, total_rows):,} of {total_rows:,}")
 
 col1, col2, col3 = st.columns([1, 2, 1])
 
