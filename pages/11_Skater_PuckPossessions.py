@@ -1,0 +1,214 @@
+from pathlib import Path
+import streamlit as st
+import pandas as pd
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+CSV_PATH = BASE_DIR / "skater_puckPossessions.csv"
+
+@st.cache_data
+def load_data(csv_path):
+    if not csv_path.exists():
+        st.error(f"CSV not found: {csv_path.name}")
+        st.stop()
+
+    file_size = csv_path.stat().st_size
+    if file_size == 0:
+        st.error(f"{csv_path.name} is empty (0 bytes).")
+        st.stop()
+
+    try:
+        return pd.read_csv(csv_path)
+    except pd.errors.EmptyDataError:
+        st.error(f"{csv_path.name} contains no readable data.")
+        st.stop()
+    except Exception as e:
+        st.error(f"Could not read {csv_path.name}: {e}")
+        st.stop()
+
+df = load_data(CSV_PATH)
+
+desired_order = [
+    "gameDate", "gameId", "skaterFullName", "playerId", "homeRoad",
+    "teamAbbrev", "opponentTeamAbbrev", "shootsCatches", "positionCode",
+    "gamesPlayed", "timeOnIcePerGame5v5", "satPct", "usatPct",
+    "goalsPct", "individualSatForPer60", "individualShotsForPer60",
+    "onIceShootingPct", "zoneStartPct", "offensiveZoneStartRatio",
+    "offensiveZoneStartPct", "neutralZoneStartPct",
+    "defensiveZoneStartPct", "faceoffPct5v5", "lastName"
+]
+
+df = df[[col for col in desired_order if col in df.columns]]
+
+if "gameDate" in df.columns:
+    df["gameDate"] = pd.to_datetime(df["gameDate"], errors="coerce").dt.date
+
+st.subheader("Skater Puck Possessions")
+
+filtered_df = df.copy()
+
+# ---- Prep filter values ----
+has_game_date = "gameDate" in filtered_df.columns
+has_team = "teamAbbrev" in filtered_df.columns
+has_player = "skaterFullName" in filtered_df.columns
+
+if has_game_date:
+    min_date = filtered_df["gameDate"].min()
+    max_date = filtered_df["gameDate"].max()
+else:
+    min_date = None
+    max_date = None
+
+# ---- Filters ----
+filter_col1, filter_col2, filter_col3 = st.columns([1.2, 1.4, 1])
+
+with filter_col1:
+    if has_game_date and pd.notna(min_date) and pd.notna(max_date):
+        date_mode = st.radio(
+            "Game Date Filter Type",
+            ["Single date", "Date range"],
+            index=0,
+            key="pposs_date_mode",
+            horizontal=True
+        )
+    else:
+        date_mode = None
+
+with filter_col2:
+    if has_game_date and pd.notna(min_date) and pd.notna(max_date):
+        if date_mode == "Single date":
+            selected_date = st.date_input(
+                "Game Date",
+                value=max_date,
+                min_value=min_date,
+                max_value=max_date,
+                key="pposs_single_date"
+            )
+
+            filtered_df = filtered_df[
+                filtered_df["gameDate"] == selected_date
+            ]
+
+        else:
+            date_range = st.date_input(
+                "Game Date Range",
+                value=(min_date, max_date),
+                min_value=min_date,
+                max_value=max_date,
+                key="pposs_date_range"
+            )
+
+            if len(date_range) == 2:
+                start_date = date_range[0]
+                end_date = date_range[1]
+
+                filtered_df = filtered_df[
+                    filtered_df["gameDate"].between(start_date, end_date)
+                ]
+
+with filter_col3:
+    page_size = st.selectbox(
+        "Rows per page",
+        [10, 25, 50, 100],
+        index=0,
+        key="pposs_page_size"
+    )
+
+filter_col4, filter_col5 = st.columns([1, 1.5])
+
+with filter_col4:
+    if has_team:
+        teams = sorted(filtered_df["teamAbbrev"].dropna().astype(str).unique().tolist())
+        selected_teams = st.multiselect(
+            "Team",
+            teams,
+            key="pposs_team_filter"
+        )
+        if selected_teams:
+            filtered_df = filtered_df[
+                filtered_df["teamAbbrev"].astype(str).isin(selected_teams)
+            ]
+
+with filter_col5:
+    if has_player:
+        search = st.text_input("Search player", key="pposs_search")
+        if search:
+            filtered_df = filtered_df[
+                filtered_df["skaterFullName"].astype(str).str.contains(search, case=False, na=False)
+            ]
+
+st.divider()
+
+# ---- Pagination ----
+total_rows = len(filtered_df)
+total_pages = max(1, (total_rows + page_size - 1) // page_size)
+
+if "pposs_page_num" not in st.session_state:
+    st.session_state.pposs_page_num = 1
+
+if "pposs_last_filter_count" not in st.session_state:
+    st.session_state.pposs_last_filter_count = total_rows
+
+if st.session_state.pposs_last_filter_count != total_rows:
+    st.session_state.pposs_page_num = 1
+    st.session_state.pposs_last_filter_count = total_rows
+
+if st.session_state.pposs_page_num > total_pages:
+    st.session_state.pposs_page_num = total_pages
+if st.session_state.pposs_page_num < 1:
+    st.session_state.pposs_page_num = 1
+
+start_idx = (st.session_state.pposs_page_num - 1) * page_size
+end_idx = start_idx + page_size
+page_df = filtered_df.iloc[start_idx:end_idx]
+
+st.caption(f"Rows {start_idx + 1:,}–{min(end_idx, total_rows):,} of {total_rows:,}")
+
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col1:
+    if st.button("◀ Back", disabled=st.session_state.pposs_page_num <= 1, key="pposs_back"):
+        st.session_state.pposs_page_num -= 1
+        st.rerun()
+
+with col2:
+    st.markdown(
+        f"<div style='text-align:center; padding-top:0.5rem;'>Page {st.session_state.pposs_page_num} of {total_pages}</div>",
+        unsafe_allow_html=True
+    )
+
+with col3:
+    if st.button("Next ▶", disabled=st.session_state.pposs_page_num >= total_pages, key="pposs_next"):
+        st.session_state.pposs_page_num += 1
+        st.rerun()
+
+rows_on_page = len(page_df)
+table_height = min(1000, max(220, rows_on_page * 35 + 40))
+
+st.dataframe(
+    page_df,
+    width="stretch",
+    hide_index=True,
+    height=table_height
+)
+
+st.markdown("### Download Options")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.download_button(
+        "⬇️ Filtered",
+        filtered_df.to_csv(index=False),
+        "filtered_skater_puckPossessions.csv",
+        "text/csv",
+        key="pposs_download_filtered"
+    )
+
+with col2:
+    st.download_button(
+        "⬇️ Full Dataset",
+        df.to_csv(index=False),
+        "full_skater_puckPossessions.csv",
+        "text/csv",
+        key="pposs_download_full"
+    )
