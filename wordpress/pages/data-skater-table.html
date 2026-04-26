@@ -20,6 +20,9 @@
         <button class="tsa-dataset-btn" data-dataset="faceoffpercentages" data-endpoint="/wp-json/tsa/v1/skater-faceoffpercentages">
           Faceoff Percentages
         </button>
+        <button class="tsa-dataset-btn" data-dataset="faceoffwins" data-endpoint="/wp-json/tsa/v1/skater-faceoffwins">
+          Faceoff Wins
+        </button>
       </div>
     </aside>
 
@@ -138,9 +141,10 @@ document.addEventListener("DOMContentLoaded", function () {
   let currentEndpoint = "/wp-json/tsa/v1/skater-bios";
   let currentDataset = "bios";
 
+  const datedDatasets = ["summary", "faceoffpercentages", "faceoffwins"];
+
   let defaultStartDate = "";
   let defaultEndDate = "";
-  let metaLoaded = true;
   let tsaFilterTimer;
 
   const teamSelect = new TomSelect("#tsa-team-filter", {
@@ -159,21 +163,35 @@ document.addEventListener("DOMContentLoaded", function () {
     closeAfterSelect: false
   });
 
+  function datasetHasDates() {
+    return datedDatasets.includes(currentDataset);
+  }
+
+  function getMetaEndpoint() {
+    return `/wp-json/tsa/v1/skater-${currentDataset}-meta`;
+  }
+
+  function getCsvEndpoint(full = false) {
+    const base = `/wp-json/tsa/v1/skater-${currentDataset}-csv`;
+    return full ? `${base}?full=1` : base;
+  }
+
   const table = new Tabulator("#tsa-table", {
     ajaxURL: currentEndpoint,
     ajaxConfig: "GET",
     ajaxParams: function () {
       const mode = document.querySelector('input[name="tsa-date-mode"]:checked').value;
+      const hasDates = datasetHasDates();
 
       return {
         search: document.getElementById("tsa-search").value,
         teams: teamSelect.getValue().join(","),
-        opponents: currentDataset === "summary" ? opponentSelect.getValue().join(",") : "",
-        homeRoad: currentDataset === "summary" ? document.getElementById("tsa-homeroad-filter").value : "",
+        opponents: hasDates ? opponentSelect.getValue().join(",") : "",
+        homeRoad: hasDates ? document.getElementById("tsa-homeroad-filter").value : "",
         positionCode: document.getElementById("tsa-position-filter").value,
-        date_single: currentDataset === "summary" && mode === "single" ? document.getElementById("tsa-date-single").value : "",
-        date_start: currentDataset === "summary" && mode === "range" ? document.getElementById("tsa-date-start").value : "",
-        date_end: currentDataset === "summary" && mode === "range" ? document.getElementById("tsa-date-end").value : ""
+        date_single: hasDates && mode === "single" ? document.getElementById("tsa-date-single").value : "",
+        date_start: hasDates && mode === "range" ? document.getElementById("tsa-date-start").value : "",
+        date_end: hasDates && mode === "range" ? document.getElementById("tsa-date-end").value : ""
       };
     },
     sortMode: "remote",
@@ -200,23 +218,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function updateDateMode() {
     const mode = document.querySelector('input[name="tsa-date-mode"]:checked').value;
+    const hasDates = datasetHasDates();
 
-    document.getElementById("tsa-single-wrap").style.display = mode === "single" ? "block" : "none";
-    document.getElementById("tsa-range-start-wrap").style.display = mode === "range" ? "block" : "none";
-    document.getElementById("tsa-range-end-wrap").style.display = mode === "range" ? "block" : "none";
+    document.getElementById("tsa-single-wrap").style.display =
+      hasDates && mode === "single" ? "block" : "none";
+
+    document.getElementById("tsa-range-start-wrap").style.display =
+      hasDates && mode === "range" ? "block" : "none";
+
+    document.getElementById("tsa-range-end-wrap").style.display =
+      hasDates && mode === "range" ? "block" : "none";
 
     refreshTable();
   }
 
   function updateDatasetUI() {
-    const isSummary = currentDataset === "summary";
+    const hasDates = datasetHasDates();
 
-    document.querySelector(".tsa-date-mode-field").style.display = isSummary ? "block" : "none";
-    document.getElementById("tsa-opponent-field").style.display = isSummary ? "block" : "none";
-    document.getElementById("tsa-homeroad-field").style.display = isSummary ? "block" : "none";
+    document.querySelector(".tsa-date-mode-field").style.display = hasDates ? "block" : "none";
+    document.getElementById("tsa-opponent-field").style.display = hasDates ? "block" : "none";
+    document.getElementById("tsa-homeroad-field").style.display = hasDates ? "block" : "none";
 
-    if (isSummary) {
-      fetch("/wp-json/tsa/v1/skater-summary-meta")
+    if (hasDates) {
+      fetch(getMetaEndpoint())
         .then(response => response.json())
         .then(meta => {
           defaultStartDate = meta.min_date;
@@ -275,7 +299,7 @@ document.addEventListener("DOMContentLoaded", function () {
     teamSelect.clear();
     opponentSelect.clear();
 
-    if (currentDataset === "summary") {
+    if (datasetHasDates()) {
       document.getElementById("tsa-date-start").value = defaultStartDate;
       document.getElementById("tsa-date-end").value = defaultEndDate;
       document.getElementById("tsa-date-single").value = defaultEndDate;
@@ -287,34 +311,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function getCurrentParams() {
     const mode = document.querySelector('input[name="tsa-date-mode"]:checked').value;
+    const hasDates = datasetHasDates();
 
     return {
       search: document.getElementById("tsa-search").value,
       teams: teamSelect.getValue().join(","),
-      opponents: currentDataset === "summary" ? opponentSelect.getValue().join(",") : "",
-      homeRoad: currentDataset === "summary" ? document.getElementById("tsa-homeroad-filter").value : "",
+      opponents: hasDates ? opponentSelect.getValue().join(",") : "",
+      homeRoad: hasDates ? document.getElementById("tsa-homeroad-filter").value : "",
       positionCode: document.getElementById("tsa-position-filter").value,
-      date_single: currentDataset === "summary" && mode === "single" ? document.getElementById("tsa-date-single").value : "",
-      date_start: currentDataset === "summary" && mode === "range" ? document.getElementById("tsa-date-start").value : "",
-      date_end: currentDataset === "summary" && mode === "range" ? document.getElementById("tsa-date-end").value : ""
+      date_single: hasDates && mode === "single" ? document.getElementById("tsa-date-single").value : "",
+      date_start: hasDates && mode === "range" ? document.getElementById("tsa-date-start").value : "",
+      date_end: hasDates && mode === "range" ? document.getElementById("tsa-date-end").value : ""
     };
   }
 
   document.getElementById("tsa-download-filtered").addEventListener("click", function () {
     const params = new URLSearchParams(getCurrentParams());
-    const csvEndpoint = currentDataset === "bios"
-      ? "/wp-json/tsa/v1/skater-bios-csv"
-      : "/wp-json/tsa/v1/skater-summary-csv";
-
-    window.open(csvEndpoint + "?" + params.toString(), "_blank");
+    window.open(getCsvEndpoint(false) + "?" + params.toString(), "_blank");
   });
 
   document.getElementById("tsa-download-full").addEventListener("click", function () {
-    const csvEndpoint = currentDataset === "bios"
-      ? "/wp-json/tsa/v1/skater-bios-csv?full=1"
-      : "/wp-json/tsa/v1/skater-summary-csv?full=1";
-
-    window.open(csvEndpoint, "_blank");
+    window.open(getCsvEndpoint(true), "_blank");
   });
 
   updateDatasetUI();
