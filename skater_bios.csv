@@ -1,4 +1,4 @@
-skaterFullName,playerId,currentTeamAbbrev,currentTeamName,shootsCatches,positionCode,birthDate,birthCity,birthStateProvinceCode,birthCountryCode,nationalityCode,height,weight,draftYear,draftRound,draftOverall,firstSeasonForGameType,isInHallOfFameYn,gamesPlayed,goals,assists,points,lastName
+﻿skaterFullName,playerId,currentTeamAbbrev,currentTeamName,shootsCatches,positionCode,birthDate,birthCity,birthStateProvinceCode,birthCountryCode,nationalityCode,height,weight,draftYear,draftRound,draftOverall,firstSeasonForGameType,isInHallOfFameYn,gamesPlayed,goals,assists,points,lastName
 Travis Hamonic,8474612,DET,Detroit Red Wings,R,D,1990-08-16,St. Malo,MB,CAN,CAN,73,193,2008.0,2.0,53.0,20102011,N,25,0,2,2,Hamonic
 Ryan Shea,8478854,PIT,Pittsburgh Penguins,L,D,1997-02-11,Milton,MA,USA,USA,73,200,2015.0,4.0,121.0,20232024,N,78,6,26,32,Shea
 Noel Acciari,8478569,PIT,Pittsburgh Penguins,R,C,1991-12-01,Johnston,RI,USA,USA,71,204,,,,20152016,N,65,12,12,24,Acciari

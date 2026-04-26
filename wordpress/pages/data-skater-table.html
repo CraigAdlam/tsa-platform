@@ -6,7 +6,7 @@
   <div class="tsa-layout">
 
     <aside id="tsa-sidebar" class="tsa-sidebar">
-      <button id="tsa-sidebar-toggle" type="button">☰ Datasets</button>
+      <button id="tsa-sidebar-toggle" type="button">☰ Data</button>
 
       <div id="tsa-sidebar-content">
         <button class="tsa-dataset-btn active" data-dataset="bios" data-endpoint="/wp-json/tsa/v1/skater-bios">
@@ -320,12 +320,15 @@ document.addEventListener("DOMContentLoaded", function () {
 <style>
 #tsa-table-wrap {
   max-width: 100%;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .tsa-layout {
   display: flex;
   gap: 18px;
   align-items: flex-start;
+  width: 100%;
 }
 
 .tsa-sidebar {
@@ -335,11 +338,12 @@ document.addEventListener("DOMContentLoaded", function () {
   border-radius: 10px;
   background: #fff;
   padding: 12px;
+  box-sizing: border-box;
 }
 
 .tsa-sidebar.collapsed {
-  width: 58px;
-  min-width: 58px;
+  width: 120px;
+  min-width: 120px;
 }
 
 .tsa-sidebar.collapsed #tsa-sidebar-content {
@@ -377,6 +381,7 @@ document.addEventListener("DOMContentLoaded", function () {
 .tsa-main {
   flex: 1;
   min-width: 0;
+  max-width: 100%;
 }
 
 .tsa-controls-grid {
@@ -385,10 +390,12 @@ document.addEventListener("DOMContentLoaded", function () {
   gap: 14px;
   align-items: end;
   margin-bottom: 18px;
+  width: 100%;
 }
 
 .tsa-field {
   min-width: 0;
+  max-width: 100%;
 }
 
 .tsa-field label {
@@ -517,17 +524,24 @@ input[type="date"] {
   border-radius: 8px;
   font-size: 14px;
   background: #f8fafc;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 #tsa-table {
   border: 1px solid #d9e1ea;
   border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   background: #fff;
+  max-width: 100%;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tabulator {
   font-size: 13px;
+  min-width: 900px;
 }
 
 .tsa-download-row {
@@ -535,6 +549,7 @@ input[type="date"] {
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 14px;
+  max-width: 100%;
 }
 
 .tsa-download-row button {
@@ -551,24 +566,39 @@ input[type="date"] {
 }
 
 @media (max-width: 1000px) {
+  #tsa-table-wrap {
+    overflow-x: hidden;
+  }
+
   .tsa-layout {
     flex-direction: column;
+    width: 100%;
   }
 
   .tsa-sidebar,
   .tsa-sidebar.collapsed {
     width: 100%;
-    min-width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .tsa-main {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .tsa-controls-grid {
     grid-template-columns: 1fr;
+    width: 100%;
   }
 
   .tsa-field input,
   .tsa-field select,
   .tsa-field button,
   input[type="date"] {
+    width: 100%;
+    max-width: 100%;
     height: 42px !important;
     min-height: 42px !important;
     max-height: 42px !important;
@@ -576,9 +606,23 @@ input[type="date"] {
 
   .ts-wrapper,
   .ts-control {
+    width: 100%;
+    max-width: 100%;
     height: auto !important;
     min-height: 42px !important;
     max-height: none !important;
+  }
+
+  .tsa-download-row {
+    flex-direction: column;
+  }
+
+  .tsa-download-row button {
+    width: 100%;
+  }
+
+  #tsa-table {
+    overflow-x: auto;
   }
 }
 </style>

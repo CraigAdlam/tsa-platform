@@ -8,6 +8,9 @@ add_action('rest_api_init', function () {
 
 function tsa_get_skater_summary($request) {
     global $wpdb;
+	
+	$wpdb->query("SET NAMES utf8mb4");
+	$wpdb->query("SET CHARACTER SET utf8mb4");
 
     $table = $wpdb->prefix . 'tsa_skater_summary';
 
@@ -158,6 +161,9 @@ add_action('rest_api_init', function () {
 
 function tsa_get_skater_summary_meta($request) {
     global $wpdb;
+	
+	$wpdb->query("SET NAMES utf8mb4");
+	$wpdb->query("SET CHARACTER SET utf8mb4");
 
     $table = $wpdb->prefix . 'tsa_skater_summary';
 
@@ -180,6 +186,9 @@ add_action('rest_api_init', function () {
 
 function tsa_download_skater_summary_csv($request) {
     global $wpdb;
+	
+	$wpdb->query("SET NAMES utf8mb4");
+	$wpdb->query("SET CHARACTER SET utf8mb4");
 
     $table = $wpdb->prefix . 'tsa_skater_summary';
 
@@ -282,6 +291,9 @@ add_action('rest_api_init', function () {
 
 function tsa_get_skater_bios($request) {
     global $wpdb;
+	
+	$wpdb->query("SET NAMES utf8mb4");
+	$wpdb->query("SET CHARACTER SET utf8mb4");
 
     $table = $wpdb->prefix . 'tsa_skater_bios';
 
@@ -341,4 +353,83 @@ function tsa_get_skater_bios($request) {
         'last_page' => $last_page,
         'total' => $total,
     ];
+}
+
+add_action('rest_api_init', function () {
+    register_rest_route('tsa/v1', '/skater-bios-csv', [
+        'methods' => 'GET',
+        'callback' => 'tsa_download_skater_bios_csv',
+        'permission_callback' => '__return_true',
+    ]);
+});
+
+function tsa_download_skater_bios_csv($request) {
+    global $wpdb;
+
+    $wpdb->query("SET NAMES utf8mb4");
+    $wpdb->query("SET CHARACTER SET utf8mb4");
+
+    $table = $wpdb->prefix . 'tsa_skater_bios';
+
+    $full = $request->get_param('full');
+
+    $where = [];
+    $params = [];
+
+    if (!$full) {
+        $teams_raw = sanitize_text_field($request->get_param('teams'));
+        $positionCode = sanitize_text_field($request->get_param('positionCode'));
+        $search = sanitize_text_field($request->get_param('search'));
+
+        if (!empty($teams_raw)) {
+            $teams = array_filter(array_map('trim', explode(',', $teams_raw)));
+            if ($teams) {
+                $placeholders = implode(',', array_fill(0, count($teams), '%s'));
+                $where[] = "currentTeamAbbrev IN ($placeholders)";
+                foreach ($teams as $t) $params[] = $t;
+            }
+        }
+
+        if (!empty($positionCode)) {
+            $where[] = "positionCode = %s";
+            $params[] = $positionCode;
+        }
+
+        if (!empty($search)) {
+            $like = '%' . $wpdb->esc_like($search) . '%';
+            $where[] = "skaterFullName LIKE %s";
+            $params[] = $like;
+        }
+    }
+
+    $where_sql = $where ? "WHERE " . implode(" AND ", $where) : "";
+
+    $sql = "SELECT * FROM $table $where_sql ORDER BY skaterFullName ASC";
+
+    $rows = $params
+        ? $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A)
+        : $wpdb->get_results($sql, ARRAY_A);
+
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Encoding: UTF-8');
+
+    $filename = $full
+        ? 'full_skater_bios.csv'
+        : 'filtered_skater_bios.csv';
+
+    header("Content-Disposition: attachment; filename={$filename}");
+
+    echo "\xEF\xBB\xBF";
+
+    $out = fopen('php://output', 'w');
+
+    if (!empty($rows)) {
+        fputcsv($out, array_keys($rows[0]));
+        foreach ($rows as $row) {
+            fputcsv($out, $row);
+        }
+    }
+
+    fclose($out);
+    exit;
 }
