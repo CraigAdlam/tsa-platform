@@ -1,0 +1,47 @@
+DROP TABLE IF EXISTS wp_tsa_skater_scoringrates;
+
+CREATE TABLE wp_tsa_skater_scoringrates (
+    gameDate DATE,
+    gameId BIGINT,
+    skaterFullName VARCHAR(150),
+    playerId BIGINT,
+    homeRoad VARCHAR(10),
+    teamAbbrev VARCHAR(10),
+    opponentTeamAbbrev VARCHAR(10),
+    positionCode VARCHAR(10),
+    gamesPlayed INT,
+
+    timeOnIcePerGame5v5 DECIMAL(10,4),
+    goals5v5 INT,
+    assists5v5 INT,
+    primaryAssists5v5 INT,
+    secondaryAssists5v5 INT,
+    points5v5 INT,
+
+    goalsPer605v5 DECIMAL(10,4),
+    assistsPer605v5 DECIMAL(10,4),
+    primaryAssistsPer605v5 DECIMAL(10,4),
+    secondaryAssistsPer605v5 DECIMAL(10,4),
+    pointsPer605v5 DECIMAL(10,4),
+
+    shootingPct5v5 DECIMAL(10,4),
+    onIceShootingPct5v5 DECIMAL(10,4),
+    offensiveZoneStartPct5v5 DECIMAL(10,4),
+    satRelative5v5 DECIMAL(10,4),
+    satPct DECIMAL(10,4),
+    netMinorPenaltiesPer60 DECIMAL(10,4),
+
+    lastName VARCHAR(100),
+
+    INDEX idx_gameDate (gameDate),
+    INDEX idx_gameId (gameId),
+    INDEX idx_playerId (playerId),
+    INDEX idx_teamAbbrev (teamAbbrev),
+    INDEX idx_opponentTeamAbbrev (opponentTeamAbbrev),
+    INDEX idx_positionCode (positionCode),
+    INDEX idx_homeRoad (homeRoad),
+    INDEX idx_skaterFullName (skaterFullName)
+);
+
+DELETE FROM wp_tsa_skater_scoringrates
+WHERE skaterFullName = 'skaterFullName';

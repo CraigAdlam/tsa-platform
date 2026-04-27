@@ -60,6 +60,10 @@
         <button class="tsa-dataset-btn" data-dataset="scoringpergame" data-endpoint="/wp-json/tsa/v1/skater-scoringpergame">
           Scoring Per Game
         </button>
+		
+        <button class="tsa-dataset-btn" data-dataset="scoringrates" data-endpoint="/wp-json/tsa/v1/skater-scoringrates">
+          Scoring Rates
+        </button>
       </div>
     </aside>
 
@@ -181,7 +185,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const datedDatasets = [
     "summary", "faceoffpercentages", "faceoffwins", "goalsforagainst", "penalties",
 	"penaltykill", "penaltyshots", "percentages", "powerplay", "puckpossessions",
-	"realtime", "scoringpergame"
+	"realtime", "scoringpergame", "scoringrates"
   ];
 
   let defaultStartDate = "";
