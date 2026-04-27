@@ -2,15 +2,15 @@
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
 
 <div class="tsa-helper-text">
-  Browse datasets and advanced stats using the menu below.
+  Use the Data Menu below to browse, filter, and download datasets.
 </div>
 
 <div id="tsa-table-wrap">
 
   <div class="tsa-layout">
 
-    <aside id="tsa-sidebar" class="tsa-sidebar">
-      <button id="tsa-sidebar-toggle" type="button">☰ Data</button>
+    <aside id="tsa-sidebar" class="tsa-sidebar collapsed">
+      <button id="tsa-sidebar-toggle" type="button">☰ Data Menu</button>
 
       <div id="tsa-sidebar-content">
         <button class="tsa-dataset-btn active" data-dataset="bios" data-endpoint="/wp-json/tsa/v1/skater-bios">
@@ -406,6 +406,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <style>
 #tsa-table-wrap {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   max-width: 100%;
   width: 100%;
   overflow-x: hidden;
@@ -429,8 +431,8 @@ document.addEventListener("DOMContentLoaded", function () {
 }
 
 .tsa-sidebar.collapsed {
-  width: 120px;
-  min-width: 120px;
+  width: 150px;
+  min-width: 150px;
 }
 
 .tsa-sidebar.collapsed #tsa-sidebar-content {
