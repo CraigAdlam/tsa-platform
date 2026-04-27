@@ -1,0 +1,40 @@
+DROP TABLE IF EXISTS wp_tsa_skater_goalsforagainst;
+
+CREATE TABLE wp_tsa_skater_goalsforagainst (
+    gameDate DATE,
+    gameId BIGINT,
+    skaterFullName VARCHAR(150),
+    playerId BIGINT,
+    homeRoad VARCHAR(10),
+    teamAbbrev VARCHAR(10),
+    opponentTeamAbbrev VARCHAR(10),
+    positionCode VARCHAR(10),
+    gamesPlayed INT,
+    goals INT,
+    assists INT,
+    points INT,
+    powerPlayTimeOnIcePerGame DECIMAL(10,4),
+    powerPlayGoalFor INT,
+    shortHandedGoalsAgainst INT,
+    shortHandedTimeOnIcePerGame DECIMAL(10,4),
+    shortHandedGoalsFor INT,
+    powerPlayGoalsAgainst INT,
+    evenStrengthTimeOnIcePerGame DECIMAL(10,4),
+    evenStrengthGoalsFor INT,
+    evenStrengthGoalsAgainst INT,
+    evenStrengthGoalDifference INT,
+    evenStrengthGoalsForPct DECIMAL(10,4),
+    lastName VARCHAR(100),
+
+    INDEX idx_gameDate (gameDate),
+    INDEX idx_gameId (gameId),
+    INDEX idx_playerId (playerId),
+    INDEX idx_teamAbbrev (teamAbbrev),
+    INDEX idx_opponentTeamAbbrev (opponentTeamAbbrev),
+    INDEX idx_positionCode (positionCode),
+    INDEX idx_homeRoad (homeRoad),
+    INDEX idx_skaterFullName (skaterFullName)
+);
+
+DELETE FROM wp_tsa_skater_goalsforagainst
+WHERE skaterFullName = 'skaterFullName';
