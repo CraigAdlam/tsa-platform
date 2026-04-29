@@ -9,8 +9,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_summary($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_summary';
 
@@ -190,8 +189,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_bios($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_bios';
 
@@ -339,8 +337,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_faceoffpercentages($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_faceoffpercentages';
 
@@ -539,8 +536,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_faceoffwins($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_faceoffwins';
 
@@ -745,8 +741,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_goalsforagainst($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_goalsforagainst';
 
@@ -943,8 +938,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_penalties($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_penalties';
 
@@ -1145,8 +1139,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_penaltykill($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_penaltykill';
 
@@ -1347,8 +1340,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_penaltyshots($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_penaltyshots';
 
@@ -1535,8 +1527,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_percentages($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_percentages';
 
@@ -1737,8 +1728,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_powerplay($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_powerplay';
 
@@ -1939,8 +1929,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_puckpossessions($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_puckpossessions';
 
@@ -2137,8 +2126,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_realtime($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_realtime';
 
@@ -2345,8 +2333,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_scoringpergame($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_scoringpergame';
 
@@ -2550,8 +2537,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_scoringrates($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_scoringrates';
 
@@ -2751,8 +2737,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_shootout($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_shootout';
 
@@ -2945,8 +2930,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_shottype($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_shottype';
 
@@ -3161,8 +3145,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_summaryshooting($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_summaryshooting';
 
@@ -3362,8 +3345,7 @@ add_action('rest_api_init', function () {
 function tsa_get_skater_timeonice($request) {
     global $wpdb;
 	
-	$wpdb->query("SET NAMES utf8mb4");
-	$wpdb->query("SET CHARACTER SET utf8mb4");
+	tsa_set_utf8mb4();
 
     $table = $wpdb->prefix . 'tsa_skater_timeonice';
 
