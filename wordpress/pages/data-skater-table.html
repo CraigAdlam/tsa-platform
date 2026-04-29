@@ -10,7 +10,7 @@
   <div class="tsa-layout">
 
     <aside id="tsa-sidebar" class="tsa-sidebar collapsed">
-      <button id="tsa-sidebar-toggle" type="button">☰ Datasets</button>
+      <button id="tsa-sidebar-toggle" type="button" aria-expanded="false">☰ Datasets</button>
 
       <div id="tsa-sidebar-content">
         <button class="tsa-dataset-btn active" data-dataset="bios" data-endpoint="/wp-json/tsa/v1/skater-bios">
@@ -360,7 +360,13 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   document.getElementById("tsa-sidebar-toggle").addEventListener("click", function () {
-    document.getElementById("tsa-sidebar").classList.toggle("collapsed");
+    const sidebar = document.getElementById("tsa-sidebar");
+    const button = document.getElementById("tsa-sidebar-toggle");
+
+    sidebar.classList.toggle("collapsed");
+
+    const expanded = !sidebar.classList.contains("collapsed");
+    button.setAttribute("aria-expanded", expanded);
   });
 
   document.querySelectorAll('input[name="tsa-date-mode"]').forEach(function (el) {
