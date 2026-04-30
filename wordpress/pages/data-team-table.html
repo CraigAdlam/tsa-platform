@@ -1,0 +1,157 @@
+<link href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+<link rel="stylesheet" href="../css/data-skater-table.css">
+
+<div class="tsa-helper-text">
+  Use the Datasets menu below to browse, filter, and download NHL data.
+</div>
+
+<details class="tsa-dataset-notes">
+  <summary>About these datasets & columns</summary>
+
+  <p>
+    Source data originates from NHL public stats endpoints. Some datasets may include
+    standardized or derived columns added for consistency across tables.
+  </p>
+
+  <p>
+    Example: <code>teamAbbrev</code> is added to Summary Shooting during the publish
+    process by joining on <code>gameId</code> and <code>playerId</code>.
+  </p>
+  
+  <p>
+    These datasets can support historical analysis, dashboards, and custom
+    predictive modeling workflows.
+  </p>
+
+  <p>
+    Source data may be revised or updated over time.
+  </p>
+</details>
+
+<div id="tsa-last-updated" class="tsa-last-updated">
+  Skater data updated: Loading...
+</div>
+
+<div id="tsa-table-wrap">
+
+  <div class="tsa-layout">
+
+    <aside id="tsa-sidebar" class="tsa-sidebar collapsed">
+      <button id="tsa-sidebar-toggle" type="button" aria-expanded="false">☰ Datasets</button>
+
+      <div id="tsa-sidebar-content">
+		<button class="tsa-dataset-btn active" data-dataset="summary" data-endpoint="/wp-json/tsa/v1/team-summary">Summary</button>
+		<button class="tsa-dataset-btn" data-dataset="daysbetweengames" data-endpoint="/wp-json/tsa/v1/team-daysbetweengames">Days Between Games</button>
+		<button class="tsa-dataset-btn" data-dataset="faceoffpercentages" data-endpoint="/wp-json/tsa/v1/team-faceoffpercentages">Faceoff Percentages</button>
+		<button class="tsa-dataset-btn" data-dataset="faceoffwins" data-endpoint="/wp-json/tsa/v1/team-faceoffwins">Faceoff Wins</button>
+		<button class="tsa-dataset-btn" data-dataset="goalgames" data-endpoint="/wp-json/tsa/v1/team-goalgames">Goal Games</button>
+		<button class="tsa-dataset-btn" data-dataset="goalsagainstbystrength" data-endpoint="/wp-json/tsa/v1/team-goalsagainstbystrength">Goals Against by Strength</button>
+		<button class="tsa-dataset-btn" data-dataset="goalsbyperiod" data-endpoint="/wp-json/tsa/v1/team-goalsbyperiod">Goals by Period</button>
+		<button class="tsa-dataset-btn" data-dataset="goalsforbystrength" data-endpoint="/wp-json/tsa/v1/team-goalsforbystrength">Goals For by Strength</button>
+		<button class="tsa-dataset-btn" data-dataset="goalsforbystrengthgoaliepull" data-endpoint="/wp-json/tsa/v1/team-goalsforbystrengthgoaliepull">Goals For - Goalie Pull</button>
+		<button class="tsa-dataset-btn" data-dataset="leadingtrailing" data-endpoint="/wp-json/tsa/v1/team-leadingtrailing">Leading / Trailing</button>
+		<button class="tsa-dataset-btn" data-dataset="outshootoutshotby" data-endpoint="/wp-json/tsa/v1/team-outshootoutshotby">Outshoot / Outshot By</button>
+		<button class="tsa-dataset-btn" data-dataset="penalties" data-endpoint="/wp-json/tsa/v1/team-penalties">Penalties</button>
+		<button class="tsa-dataset-btn" data-dataset="penaltykill" data-endpoint="/wp-json/tsa/v1/team-penaltykill">Penalty Kill</button>
+		<button class="tsa-dataset-btn" data-dataset="penaltykilltime" data-endpoint="/wp-json/tsa/v1/team-penaltykilltime">Penalty Kill Time</button>
+		<button class="tsa-dataset-btn" data-dataset="percentages" data-endpoint="/wp-json/tsa/v1/team-percentages">Percentages</button>
+		<button class="tsa-dataset-btn" data-dataset="powerplay" data-endpoint="/wp-json/tsa/v1/team-powerplay">Power Play</button>
+		<button class="tsa-dataset-btn" data-dataset="powerplaytime" data-endpoint="/wp-json/tsa/v1/team-powerplaytime">Power Play Time</button>
+		<button class="tsa-dataset-btn" data-dataset="realtime" data-endpoint="/wp-json/tsa/v1/team-realtime">Realtime</button>
+		<button class="tsa-dataset-btn" data-dataset="scoretrailfirst" data-endpoint="/wp-json/tsa/v1/team-scoretrailfirst">Score / Trail First</button>
+		<button class="tsa-dataset-btn" data-dataset="shootout" data-endpoint="/wp-json/tsa/v1/team-shootout">Shootout</button>
+		<button class="tsa-dataset-btn" data-dataset="shottype" data-endpoint="/wp-json/tsa/v1/team-shottype">Shot Type</button>
+		<button class="tsa-dataset-btn" data-dataset="summaryshooting" data-endpoint="/wp-json/tsa/v1/team-summaryshooting">Summary Shooting</button>
+      </div>
+    </aside>
+
+    <main class="tsa-main">
+
+      <div class="tsa-controls-grid">
+
+        <div class="tsa-field tsa-date-mode-field">
+          <label>Game Date Filter Type</label>
+          <div class="tsa-radio-row">
+            <label><input type="radio" name="tsa-date-mode" value="single" checked> Single date</label>
+            <label><input type="radio" name="tsa-date-mode" value="range"> Date range</label>
+          </div>
+        </div>
+
+        <div class="tsa-field" id="tsa-single-wrap" style="display:none;">
+          <label>Game Date</label>
+          <input id="tsa-date-single" type="date">
+        </div>
+
+        <div class="tsa-field" id="tsa-range-start-wrap">
+          <label>Start Date</label>
+          <input id="tsa-date-start" type="date">
+        </div>
+
+        <div class="tsa-field" id="tsa-range-end-wrap">
+          <label>End Date</label>
+          <input id="tsa-date-end" type="date">
+        </div>
+
+        <div class="tsa-field">
+          <label>Team</label>
+          <select id="tsa-team-filter" multiple placeholder="Choose teams..."></select>
+        </div>
+
+        <div class="tsa-field" id="tsa-opponent-field">
+          <label>Opponent Team</label>
+          <select id="tsa-opponent-filter" multiple placeholder="Choose opponents..."></select>
+        </div>
+
+        <div class="tsa-field" id="tsa-homeroad-field">
+          <label>Home / Road</label>
+          <select id="tsa-homeroad-filter">
+            <option value="">All</option>
+            <option value="H">Home</option>
+            <option value="R">Road</option>
+          </select>
+        </div>
+
+        <div class="tsa-field">
+		  <label>Search Team</label>
+		  <input id="tsa-search" type="text" placeholder="Search team...">
+        </div>
+
+        <div class="tsa-field">
+          <label>&nbsp;</label>
+          <button id="tsa-reset" type="button">Clear Filters</button>
+        </div>
+
+      </div>
+
+      <div class="tsa-download-row">
+		<button
+		  id="tsa-download-filtered"
+		  title="Download the currently filtered rows as CSV"
+		  aria-label="Download filtered CSV"
+		>
+		  ⬇ Download Filtered CSV
+		</button>
+
+		<button
+		  id="tsa-download-full"
+		  title="Download the full selected dataset as CSV"
+		  aria-label="Download full CSV"
+		>
+		  ⬇ Download Full CSV
+		</button>
+      </div>
+
+	  <div id="tsa-status" class="tsa-status loading">
+	    Loading dataset...
+	  </div>
+	  <div id="tsa-mobile-scroll-tip">Tip: Scroll horizontally to view all columns.</div>
+	  <div id="tsa-table"></div>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script src="../js/data-team-table.js"></script>

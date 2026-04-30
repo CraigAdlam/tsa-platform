@@ -3700,3 +3700,378 @@ function tsa_stream_skater_csv_for_table($request, $table_name, $filename_base, 
 	fclose($out);
 	exit;
 }
+
+
+
+function tsa_get_team_dataset_map() {
+    return [
+        'summary' => 'tsa_team_summary',
+        'daysbetweengames' => 'tsa_team_daysbetweengames',
+        'faceoffpercentages' => 'tsa_team_faceoffpercentages',
+        'faceoffwins' => 'tsa_team_faceoffwins',
+        'goalgames' => 'tsa_team_goalgames',
+        'goalsagainstbystrength' => 'tsa_team_goalsagainstbystrength',
+        'goalsbyperiod' => 'tsa_team_goalsbyperiod',
+        'goalsforbystrength' => 'tsa_team_goalsforbystrength',
+        'goalsforbystrengthgoaliepull' => 'tsa_team_goalsforbystrengthgoaliepull',
+        'leadingtrailing' => 'tsa_team_leadingtrailing',
+        'outshootoutshotby' => 'tsa_team_outshootoutshotby',
+        'penalties' => 'tsa_team_penalties',
+        'penaltykill' => 'tsa_team_penaltykill',
+        'penaltykilltime' => 'tsa_team_penaltykilltime',
+        'percentages' => 'tsa_team_percentages',
+        'powerplay' => 'tsa_team_powerplay',
+        'powerplaytime' => 'tsa_team_powerplaytime',
+        'realtime' => 'tsa_team_realtime',
+        'scoretrailfirst' => 'tsa_team_scoretrailfirst',
+        'shootout' => 'tsa_team_shootout',
+        'shottype' => 'tsa_team_shottype',
+        'summaryshooting' => 'tsa_team_summaryshooting',
+    ];
+}
+
+add_action('rest_api_init', function () {
+    foreach (tsa_get_team_dataset_map() as $dataset => $table_name) {
+        register_rest_route('tsa/v1', "/team-$dataset", [
+            'methods' => 'GET',
+            'callback' => function ($request) use ($dataset) {
+                return tsa_get_team_dataset($request, $dataset);
+            },
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route('tsa/v1', "/team-$dataset-meta", [
+            'methods' => 'GET',
+            'callback' => function ($request) use ($dataset) {
+                return tsa_get_team_date_meta($dataset);
+            },
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route('tsa/v1', "/team-$dataset-csv", [
+            'methods' => 'GET',
+            'callback' => function ($request) use ($dataset) {
+                return tsa_stream_team_csv($request, $dataset);
+            },
+            'permission_callback' => '__return_true',
+        ]);
+    }
+
+    register_rest_route('tsa/v1', '/team-team-options', [
+        'methods' => 'GET',
+        'callback' => 'tsa_get_team_team_options',
+        'permission_callback' => '__return_true',
+    ]);
+});
+
+function tsa_get_team_table_name($dataset) {
+    $map = tsa_get_team_dataset_map();
+
+    if (!isset($map[$dataset])) {
+        return null;
+    }
+
+    return $map[$dataset];
+}
+
+function tsa_get_team_allowed_columns($table) {
+    global $wpdb;
+
+    $columns = $wpdb->get_results("SHOW COLUMNS FROM `$table`", ARRAY_A);
+
+    return array_map(function ($col) {
+        return $col['Field'];
+    }, $columns);
+}
+
+function tsa_get_team_dataset($request, $dataset) {
+    global $wpdb;
+
+    tsa_set_utf8mb4();
+
+    $table_name = tsa_get_team_table_name($dataset);
+
+    if (!$table_name) {
+        return new WP_Error('invalid_dataset', 'Invalid team dataset.', ['status' => 400]);
+    }
+
+    $table = $wpdb->prefix . $table_name;
+
+    $page = max(1, intval($request->get_param('page') ?: 1));
+    $size_param = $request->get_param('size') ?: $request->get_param('per_page') ?: 25;
+    $per_page = min(100, max(10, intval($size_param)));
+    $offset = ($page - 1) * $per_page;
+
+    $teams_raw = sanitize_text_field($request->get_param('teams'));
+    $opponents_raw = sanitize_text_field($request->get_param('opponents'));
+    $homeRoad = sanitize_text_field($request->get_param('homeRoad'));
+    $search = sanitize_text_field($request->get_param('search'));
+    $date_single = sanitize_text_field($request->get_param('date_single'));
+    $date_start = sanitize_text_field($request->get_param('date_start'));
+    $date_end = sanitize_text_field($request->get_param('date_end'));
+
+    $where = [];
+    $params = [];
+
+    if (!empty($teams_raw)) {
+        $teams = array_filter(array_map('trim', explode(',', $teams_raw)));
+
+        if (!empty($teams)) {
+            $placeholders = implode(',', array_fill(0, count($teams), '%s'));
+            $where[] = "teamFullName IN ($placeholders)";
+
+            foreach ($teams as $team) {
+                $params[] = $team;
+            }
+        }
+    }
+
+    if (!empty($opponents_raw)) {
+        $opponents = array_filter(array_map('trim', explode(',', $opponents_raw)));
+
+        if (!empty($opponents)) {
+            $placeholders = implode(',', array_fill(0, count($opponents), '%s'));
+            $where[] = "opponentTeamAbbrev IN ($placeholders)";
+
+            foreach ($opponents as $opponent) {
+                $params[] = $opponent;
+            }
+        }
+    }
+
+    if (!empty($homeRoad)) {
+        $where[] = "homeRoad = %s";
+        $params[] = $homeRoad;
+    }
+
+    if (!empty($search)) {
+        $like = '%' . $wpdb->esc_like($search) . '%';
+        $where[] = "teamFullName LIKE %s";
+        $params[] = $like;
+    }
+
+    if (!empty($date_single)) {
+        $where[] = "gameDate = %s";
+        $params[] = $date_single;
+    } elseif (!empty($date_start) && !empty($date_end)) {
+        $where[] = "gameDate BETWEEN %s AND %s";
+        $params[] = $date_start;
+        $params[] = $date_end;
+    }
+
+    $where_sql = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+
+    $count_sql = "SELECT COUNT(*) FROM `$table` $where_sql";
+
+    $total = !empty($params)
+        ? intval($wpdb->get_var($wpdb->prepare($count_sql, ...$params)))
+        : intval($wpdb->get_var($count_sql));
+
+    $last_page = max(1, ceil($total / $per_page));
+
+    $allowed_sort_fields = tsa_get_team_allowed_columns($table);
+
+    $sort_field = in_array('gameDate', $allowed_sort_fields, true) ? 'gameDate' : 'teamFullName';
+    $sort_dir = 'DESC';
+
+    $sorters = $request->get_param('sort');
+
+    if (empty($sorters)) {
+        $sorters = $request->get_param('sorters');
+    }
+
+    if (is_string($sorters)) {
+        $decoded = json_decode($sorters, true);
+
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $sorters = $decoded;
+        }
+    }
+
+    if (!empty($sorters) && is_array($sorters)) {
+        $first_sorter = $sorters[0] ?? null;
+
+        if (is_array($first_sorter)) {
+            if (!empty($first_sorter['field']) && in_array($first_sorter['field'], $allowed_sort_fields, true)) {
+                $sort_field = $first_sorter['field'];
+            }
+
+            if (!empty($first_sorter['dir']) && strtolower($first_sorter['dir']) === 'asc') {
+                $sort_dir = 'ASC';
+            }
+        }
+    }
+
+    $order_sql = "ORDER BY `$sort_field` $sort_dir";
+
+    $data_sql = "SELECT *
+                 FROM `$table`
+                 $where_sql
+                 $order_sql
+                 LIMIT %d OFFSET %d";
+
+    $data_params = array_merge($params, [$per_page, $offset]);
+
+    $rows = $wpdb->get_results(
+        $wpdb->prepare($data_sql, ...$data_params),
+        ARRAY_A
+    );
+
+    return [
+        'data' => $rows,
+        'last_page' => $last_page,
+        'total' => $total,
+    ];
+}
+
+function tsa_get_team_date_meta($dataset) {
+    global $wpdb;
+
+    tsa_set_utf8mb4();
+
+    $table_name = tsa_get_team_table_name($dataset);
+
+    if (!$table_name) {
+        return new WP_Error('invalid_dataset', 'Invalid team dataset.', ['status' => 400]);
+    }
+
+    $table = $wpdb->prefix . $table_name;
+
+    return [
+        'min_date' => $wpdb->get_var("SELECT MIN(gameDate) FROM `$table`"),
+        'max_date' => $wpdb->get_var("SELECT MAX(gameDate) FROM `$table`"),
+    ];
+}
+
+function tsa_get_team_team_options($request) {
+    global $wpdb;
+
+    tsa_set_utf8mb4();
+
+    $summary_table = $wpdb->prefix . 'tsa_team_summary';
+
+    $teams = $wpdb->get_col("
+        SELECT DISTINCT teamFullName
+        FROM `$summary_table`
+        WHERE teamFullName <> ''
+        ORDER BY teamFullName
+    ");
+
+    $opponents = $wpdb->get_col("
+        SELECT DISTINCT opponentTeamAbbrev
+        FROM `$summary_table`
+        WHERE opponentTeamAbbrev <> ''
+        ORDER BY opponentTeamAbbrev
+    ");
+
+    return [
+        'teams' => $teams,
+        'opponents' => $opponents,
+    ];
+}
+
+function tsa_stream_team_csv($request, $dataset) {
+    global $wpdb;
+
+    tsa_set_utf8mb4();
+
+    $table_name = tsa_get_team_table_name($dataset);
+
+    if (!$table_name) {
+        return new WP_Error('invalid_dataset', 'Invalid team dataset.', ['status' => 400]);
+    }
+
+    $table = $wpdb->prefix . $table_name;
+    $full = intval($request->get_param('full')) === 1;
+
+    $where = [];
+    $params = [];
+
+    if (!$full) {
+        $teams_raw = sanitize_text_field($request->get_param('teams'));
+        $opponents_raw = sanitize_text_field($request->get_param('opponents'));
+        $homeRoad = sanitize_text_field($request->get_param('homeRoad'));
+        $search = sanitize_text_field($request->get_param('search'));
+        $date_single = sanitize_text_field($request->get_param('date_single'));
+        $date_start = sanitize_text_field($request->get_param('date_start'));
+        $date_end = sanitize_text_field($request->get_param('date_end'));
+
+        if (!empty($teams_raw)) {
+            $teams = array_filter(array_map('trim', explode(',', $teams_raw)));
+
+            if (!empty($teams)) {
+                $placeholders = implode(',', array_fill(0, count($teams), '%s'));
+                $where[] = "teamFullName IN ($placeholders)";
+
+                foreach ($teams as $team) {
+                    $params[] = $team;
+                }
+            }
+        }
+
+        if (!empty($opponents_raw)) {
+            $opponents = array_filter(array_map('trim', explode(',', $opponents_raw)));
+
+            if (!empty($opponents)) {
+                $placeholders = implode(',', array_fill(0, count($opponents), '%s'));
+                $where[] = "opponentTeamAbbrev IN ($placeholders)";
+
+                foreach ($opponents as $opponent) {
+                    $params[] = $opponent;
+                }
+            }
+        }
+
+        if (!empty($homeRoad)) {
+            $where[] = "homeRoad = %s";
+            $params[] = $homeRoad;
+        }
+
+        if (!empty($search)) {
+            $like = '%' . $wpdb->esc_like($search) . '%';
+            $where[] = "teamFullName LIKE %s";
+            $params[] = $like;
+        }
+
+        if (!empty($date_single)) {
+            $where[] = "gameDate = %s";
+            $params[] = $date_single;
+        } elseif (!empty($date_start) && !empty($date_end)) {
+            $where[] = "gameDate BETWEEN %s AND %s";
+            $params[] = $date_start;
+            $params[] = $date_end;
+        }
+    }
+
+    $where_sql = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+    $sql = "SELECT * FROM `$table` $where_sql ORDER BY gameDate DESC";
+
+    $rows = !empty($params)
+        ? $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A)
+        : $wpdb->get_results($sql, ARRAY_A);
+
+    if (empty($rows)) {
+        wp_die('No rows found for selected filters.');
+    }
+
+    header('Content-Type: text/csv; charset=utf-8');
+
+    $filename = $full
+        ? "full_team_{$dataset}.csv"
+        : "filtered_team_{$dataset}.csv";
+
+    header("Content-Disposition: attachment; filename={$filename}");
+
+    echo "\xEF\xBB\xBF";
+
+    $out = fopen('php://output', 'w');
+
+    fputcsv($out, array_keys($rows[0]), ',', '"', '\\');
+
+    foreach ($rows as $row) {
+        fputcsv($out, $row, ',', '"', '\\');
+    }
+
+    fclose($out);
+    exit;
+}
