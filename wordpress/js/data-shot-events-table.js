@@ -2,29 +2,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const statusBox = document.getElementById("tsa-status");
   const lastUpdatedBox = document.getElementById("tsa-last-updated");
 
-  const DATASET_CONFIG = {
-    shotlocationevents: {
-      hasDate: true,
-      hasTeams: true,
-      hasOpponent: true,
-      hasHomeRoad: true,
-      hasShotRegion: true,
-      hasShotType: true,
-      searchLabel: "Search Player / Team",
-      searchPlaceholder: "Search player, team, playerId..."
-    },
-    playerlocationpriors: {
-      hasDate: false,
-      hasTeams: false,
-      hasOpponent: false,
-      hasHomeRoad: false,
-      hasShotRegion: false,
-      hasShotType: false,
-      searchLabel: "Search Player",
-      searchPlaceholder: "Search player or playerId..."
-    }
-  };
-
   fetch("/wp-content/uploads/tsa-data/shot_events/wordpress_shot_events_refresh_meta.json")
     .then(response => response.json())
     .then(meta => {
@@ -58,15 +35,10 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("tsa-download-full").disabled = disabled;
   }
 
-  function setFieldVisible(id, visible) {
-    const field = document.getElementById(id);
-    if (field) {
-      field.style.display = visible ? "block" : "none";
-    }
-  }
-
   let currentEndpoint = "/wp-json/tsa/v1/shot-events-playerlocationpriors";
   let currentDataset = "playerlocationpriors";
+
+  const datedDatasets = ["shotlocationevents"];
 
   let defaultStartDate = "";
   let defaultEndDate = "";
@@ -93,10 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
     selectInstance.clearOptions();
 
     values.forEach(value => {
-      selectInstance.addOption({
-        value: value,
-        text: value
-      });
+      selectInstance.addOption({ value: value, text: value });
     });
 
     selectInstance.refreshOptions(false);
@@ -104,8 +73,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function populateSimpleSelect(selectId, values) {
     const select = document.getElementById(selectId);
-    const currentValue = select.value;
-
     select.innerHTML = '<option value="">All</option>';
 
     values.forEach(value => {
@@ -114,26 +81,40 @@ document.addEventListener("DOMContentLoaded", function () {
       option.textContent = value;
       select.appendChild(option);
     });
-
-    if (values.includes(currentValue)) {
-      select.value = currentValue;
-    }
   }
 
-  fetch("/wp-json/tsa/v1/shot-events-options")
-    .then(response => response.json())
-    .then(data => {
-      populateTomSelect(teamSelect, data.teams || []);
-      populateTomSelect(opponentSelect, data.opponents || []);
-      populateSimpleSelect("tsa-shot-region-filter", data.shot_regions || []);
-      populateSimpleSelect("tsa-shot-type-filter", data.shot_types || []);
-    })
-    .catch(() => {
-      console.warn("Unable to load dynamic shot_events filter lists.");
-    });
+  let shotEventOptionsLoaded = false;
 
-  function getCurrentConfig() {
-    return DATASET_CONFIG[currentDataset] || DATASET_CONFIG.shotlocationevents;
+  function loadShotEventOptionsOnce() {
+    if (shotEventOptionsLoaded) return;
+
+    shotEventOptionsLoaded = true;
+
+    fetch("/wp-json/tsa/v1/shot-events-options")
+      .then(response => response.json())
+      .then(data => {
+        populateTomSelect(teamSelect, data.teams || []);
+        populateTomSelect(opponentSelect, data.opponents || []);
+        populateSimpleSelect("tsa-shot-region-filter", data.shot_regions || []);
+        populateSimpleSelect("tsa-shot-type-filter", data.shot_types || []);
+      })
+      .catch(() => {
+        console.warn("Unable to load dynamic shot_events filter lists.");
+      });
+  }
+
+  function datasetHasDates() {
+    return datedDatasets.includes(currentDataset);
+  }
+  
+  function getTableLayout() {
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+    if (currentDataset === "playerlocationpriors") {
+      return isMobile ? "fitDataStretch" : "fitData";
+    }
+
+    return "fitDataStretch";
   }
 
   function getMetaEndpoint() {
@@ -149,19 +130,19 @@ document.addEventListener("DOMContentLoaded", function () {
     ajaxURL: currentEndpoint,
     ajaxConfig: "GET",
     ajaxParams: function () {
-      const config = getCurrentConfig();
       const mode = document.querySelector('input[name="tsa-date-mode"]:checked').value;
+      const hasDates = datasetHasDates();
 
       return {
         search: document.getElementById("tsa-search").value,
-        teams: config.hasTeams ? teamSelect.getValue().join(",") : "",
-        opponents: config.hasOpponent ? opponentSelect.getValue().join(",") : "",
-        homeRoad: config.hasHomeRoad ? document.getElementById("tsa-homeroad-filter").value : "",
-        shot_region: config.hasShotRegion ? document.getElementById("tsa-shot-region-filter").value : "",
-        shotType: config.hasShotType ? document.getElementById("tsa-shot-type-filter").value : "",
-        date_single: config.hasDate && mode === "single" ? document.getElementById("tsa-date-single").value : "",
-        date_start: config.hasDate && mode === "range" ? document.getElementById("tsa-date-start").value : "",
-        date_end: config.hasDate && mode === "range" ? document.getElementById("tsa-date-end").value : ""
+        teams: hasDates ? teamSelect.getValue().join(",") : "",
+        opponents: hasDates ? opponentSelect.getValue().join(",") : "",
+        homeRoad: hasDates ? document.getElementById("tsa-homeroad-filter").value : "",
+        shot_region: hasDates ? document.getElementById("tsa-shot-region-filter").value : "",
+        shotType: hasDates ? document.getElementById("tsa-shot-type-filter").value : "",
+        date_single: hasDates && mode === "single" ? document.getElementById("tsa-date-single").value : "",
+        date_start: hasDates && mode === "range" ? document.getElementById("tsa-date-start").value : "",
+        date_end: hasDates && mode === "range" ? document.getElementById("tsa-date-end").value : ""
       };
     },
     sortMode: "remote",
@@ -169,11 +150,11 @@ document.addEventListener("DOMContentLoaded", function () {
     paginationMode: "remote",
     paginationSize: 10,
     paginationSizeSelector: [10, 25, 50, 100],
-    layout: "fitDataStretch",
+    layout: getTableLayout(),
     autoColumns: true,
 
-    ajaxResponse: function (url, params, response) {
-      setDownloadButtonsDisabled(false);
+	ajaxResponse: function (url, params, response) {
+	  setDownloadButtonsDisabled(false);
 
       const total = Number(response.total || 0);
 
@@ -199,67 +180,90 @@ document.addEventListener("DOMContentLoaded", function () {
     setDownloadButtonsDisabled(true);
 
     tsaFilterTimer = setTimeout(function () {
-      table.setPage(1);
-      table.setData(currentEndpoint);
+      if (table.getPage && table.getPage() !== 1) {
+        table.setPage(1);
+      } else {
+        table.setData(currentEndpoint);
+      }
     }, 300);
   }
 
   function updateDateMode() {
-    const config = getCurrentConfig();
     const mode = document.querySelector('input[name="tsa-date-mode"]:checked').value;
+    const hasDates = datasetHasDates();
 
-    setFieldVisible("tsa-single-wrap", config.hasDate && mode === "single");
-    setFieldVisible("tsa-range-start-wrap", config.hasDate && mode === "range");
-    setFieldVisible("tsa-range-end-wrap", config.hasDate && mode === "range");
+    document.getElementById("tsa-single-wrap").style.display =
+      hasDates && mode === "single" ? "block" : "none";
+
+    document.getElementById("tsa-range-start-wrap").style.display =
+      hasDates && mode === "range" ? "block" : "none";
+
+    document.getElementById("tsa-range-end-wrap").style.display =
+      hasDates && mode === "range" ? "block" : "none";
 
     refreshTable();
   }
 
-  function updateFilterVisibility() {
-    const config = getCurrentConfig();
-    const searchInput = document.getElementById("tsa-search");
-    const searchLabel = searchInput.closest(".tsa-field").querySelector("label");
-
-    setFieldVisible("tsa-date-mode-field", config.hasDate);
-    setFieldVisible("tsa-team-field", config.hasTeams);
-    setFieldVisible("tsa-opponent-field", config.hasOpponent);
-    setFieldVisible("tsa-homeroad-field", config.hasHomeRoad);
-    setFieldVisible("tsa-shot-region-field", config.hasShotRegion);
-    setFieldVisible("tsa-shot-type-field", config.hasShotType);
-
-    searchLabel.textContent = config.searchLabel;
-    searchInput.placeholder = config.searchPlaceholder;
-
-    if (!config.hasDate) {
-      setFieldVisible("tsa-single-wrap", false);
-      setFieldVisible("tsa-range-start-wrap", false);
-      setFieldVisible("tsa-range-end-wrap", false);
-    }
-  }
-
   function updateDatasetUI() {
-    updateFilterVisibility();
+    const hasDates = datasetHasDates();
+
+    document.getElementById("tsa-date-mode-field").style.display = hasDates ? "block" : "none";
+	document.getElementById("tsa-range-start-wrap").style.display = hasDates ? "block" : "none";
+	document.getElementById("tsa-range-end-wrap").style.display = hasDates ? "block" : "none";
+    document.getElementById("tsa-team-field").style.display = hasDates ? "block" : "none";
+    document.getElementById("tsa-opponent-field").style.display = hasDates ? "block" : "none";
+    document.getElementById("tsa-homeroad-field").style.display = hasDates ? "block" : "none";
+    document.getElementById("tsa-shot-region-field").style.display = hasDates ? "block" : "none";
+    document.getElementById("tsa-shot-type-field").style.display = hasDates ? "block" : "none";
+
+	document.getElementById("tsa-single-wrap").style.display = "none";
+
+	if (!hasDates) {
+	  defaultStartDate = "";
+	  defaultEndDate = "";
+
+	  document.getElementById("tsa-date-start").value = "";
+	  document.getElementById("tsa-date-end").value = "";
+	  document.getElementById("tsa-date-single").value = "";
+
+	  document.getElementById("tsa-homeroad-filter").value = "";
+	  document.getElementById("tsa-shot-region-filter").value = "";
+	  document.getElementById("tsa-shot-type-filter").value = "";
+
+	  teamSelect.clear(true);
+	  opponentSelect.clear(true);
+
+	  document.getElementById("tsa-search").placeholder = "Search player or playerId...";
+
+	  refreshTable();
+	  return;
+	}
+
+    document.getElementById("tsa-search").placeholder = "Search player, team, playerId...";
+
+    loadShotEventOptionsOnce();
 
     fetch(getMetaEndpoint())
       .then(response => response.json())
       .then(meta => {
-        const config = getCurrentConfig();
-        defaultStartDate = meta.min_date || "";
-        defaultEndDate = meta.max_date || "";
+        const mode = document.querySelector('input[name="tsa-date-mode"]:checked').value;
+
+        defaultStartDate = meta.min_date;
+        defaultEndDate = meta.max_date;
 
         document.getElementById("tsa-date-start").value = defaultStartDate;
         document.getElementById("tsa-date-end").value = defaultEndDate;
         document.getElementById("tsa-date-single").value = defaultEndDate;
 
-        if (config.hasDate) {
-          updateDateMode();
-        } else {
-          refreshTable();
-        }
-      })
-      .catch(() => {
-        defaultStartDate = "";
-        defaultEndDate = "";
+        document.getElementById("tsa-single-wrap").style.display =
+          mode === "single" ? "block" : "none";
+
+        document.getElementById("tsa-range-start-wrap").style.display =
+          mode === "range" ? "block" : "none";
+
+        document.getElementById("tsa-range-end-wrap").style.display =
+          mode === "range" ? "block" : "none";
+
         refreshTable();
       });
   }
@@ -307,30 +311,33 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("tsa-shot-type-filter").value = "";
     document.querySelector('input[name="tsa-date-mode"][value="single"]').checked = true;
 
-    teamSelect.clear();
-    opponentSelect.clear();
+    teamSelect.clear(true);
+    opponentSelect.clear(true);
 
-    document.getElementById("tsa-date-start").value = defaultStartDate;
-    document.getElementById("tsa-date-end").value = defaultEndDate;
-    document.getElementById("tsa-date-single").value = defaultEndDate;
-
-    updateDateMode();
+    if (datasetHasDates()) {
+      document.getElementById("tsa-date-start").value = defaultStartDate;
+      document.getElementById("tsa-date-end").value = defaultEndDate;
+      document.getElementById("tsa-date-single").value = defaultEndDate;
+      updateDateMode();
+    } else {
+      refreshTable();
+    }
   });
 
   function getCurrentParams() {
-    const config = getCurrentConfig();
     const mode = document.querySelector('input[name="tsa-date-mode"]:checked').value;
+    const hasDates = datasetHasDates();
 
     return {
       search: document.getElementById("tsa-search").value,
-      teams: config.hasTeams ? teamSelect.getValue().join(",") : "",
-      opponents: config.hasOpponent ? opponentSelect.getValue().join(",") : "",
-      homeRoad: config.hasHomeRoad ? document.getElementById("tsa-homeroad-filter").value : "",
-      shot_region: config.hasShotRegion ? document.getElementById("tsa-shot-region-filter").value : "",
-      shotType: config.hasShotType ? document.getElementById("tsa-shot-type-filter").value : "",
-      date_single: config.hasDate && mode === "single" ? document.getElementById("tsa-date-single").value : "",
-      date_start: config.hasDate && mode === "range" ? document.getElementById("tsa-date-start").value : "",
-      date_end: config.hasDate && mode === "range" ? document.getElementById("tsa-date-end").value : ""
+      teams: hasDates ? teamSelect.getValue().join(",") : "",
+      opponents: hasDates ? opponentSelect.getValue().join(",") : "",
+      homeRoad: hasDates ? document.getElementById("tsa-homeroad-filter").value : "",
+      shot_region: hasDates ? document.getElementById("tsa-shot-region-filter").value : "",
+      shotType: hasDates ? document.getElementById("tsa-shot-type-filter").value : "",
+      date_single: hasDates && mode === "single" ? document.getElementById("tsa-date-single").value : "",
+      date_start: hasDates && mode === "range" ? document.getElementById("tsa-date-start").value : "",
+      date_end: hasDates && mode === "range" ? document.getElementById("tsa-date-end").value : ""
     };
   }
 
