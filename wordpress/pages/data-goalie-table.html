@@ -5,31 +5,29 @@
   <a href="/nhl-data-hub/">Data Hub</a>
   <a href="/data-skater-table/">Skater Data</a>
   <a href="/data-team-table/">Team Data</a>
-  <a class="active" href="/data-shot-events-table/">Shot Events</a>
-  <a href="/data-goalie-table/">Goalie Data</a>
+  <a href="/data-shot-events-table/">Shot Events</a>
+  <a class="active" href="/data-goalie-table/">Goalie Data</a>
 </nav>
 
 <div class="tsa-helper-text">
-  Use the Datasets menu below to browse, filter, and download NHL shot events data.
+  Use the Datasets menu below to browse, filter, and download NHL goalie data.
 </div>
 
 <details class="tsa-dataset-notes">
   <summary>About these datasets & columns</summary>
 
   <p>
-    Shot Events datasets are derived from NHL play-by-play event data and prepared for
-    location-based analysis, player shot-profile research, dashboards, and predictive
-    modeling workflows.
+    All columns reflect raw NHL goalie data prepared from NHL API endpoints.
   </p>
 
   <p>
-    <code>Player Location Priors</code> summarizes each player's historical shot-location
-    distribution into rates such as inner slot, mid slot, circles, and perimeter share.
+    <code>Shootout</code> and <code>Penalty Shots</code> are sparse datasets and only include
+    games where those events occurred.
   </p>
 
   <p>
-    <code>Shot Location Events</code> contains granular shot-level records including event,
-    team, player, goalie, coordinate, standardized coordinate, and shot-region fields.
+    These datasets can support historical analysis, dashboards, and custom
+    predictive modeling workflows.
   </p>
 
   <p>
@@ -38,28 +36,56 @@
 </details>
 
 <div id="tsa-last-updated" class="tsa-last-updated">
-  Shot events data updated: Loading...
+  Goalie data updated: Loading...
 </div>
 
 <div id="tsa-table-wrap">
-
   <div class="tsa-layout">
 
     <aside id="tsa-sidebar" class="tsa-sidebar collapsed">
       <button id="tsa-sidebar-toggle" type="button" aria-expanded="false">☰ Datasets</button>
 
-	  <div id="tsa-sidebar-content">
-	    <button class="tsa-dataset-btn active" data-dataset="playerlocationpriors" data-endpoint="/wp-json/tsa/v1/shot-events-playerlocationpriors">Player Location Priors</button>
-	    <button class="tsa-dataset-btn" data-dataset="shotlocationevents" data-endpoint="/wp-json/tsa/v1/shot-events-shotlocationevents">Shot Location Events</button>
-	  </div>
+      <div id="tsa-sidebar-content">
+        <button class="tsa-dataset-btn active" data-dataset="bios" data-endpoint="/wp-json/tsa/v1/goalie-bios">
+          Bios
+        </button>
+
+        <button class="tsa-dataset-btn" data-dataset="summary" data-endpoint="/wp-json/tsa/v1/goalie-summary">
+          Summary
+        </button>
+
+        <button class="tsa-dataset-btn" data-dataset="advanced" data-endpoint="/wp-json/tsa/v1/goalie-advanced">
+          Advanced
+        </button>
+
+        <button class="tsa-dataset-btn" data-dataset="daysrest" data-endpoint="/wp-json/tsa/v1/goalie-daysrest">
+          Days Rest
+        </button>
+
+        <button class="tsa-dataset-btn" data-dataset="penaltyshots" data-endpoint="/wp-json/tsa/v1/goalie-penaltyshots">
+          Penalty Shots
+        </button>
+
+        <button class="tsa-dataset-btn" data-dataset="savesbystrength" data-endpoint="/wp-json/tsa/v1/goalie-savesbystrength">
+          Saves By Strength
+        </button>
+
+        <button class="tsa-dataset-btn" data-dataset="shootout" data-endpoint="/wp-json/tsa/v1/goalie-shootout">
+          Shootout
+        </button>
+
+        <button class="tsa-dataset-btn" data-dataset="startedvsrelieved" data-endpoint="/wp-json/tsa/v1/goalie-startedvsrelieved">
+          Started vs Relieved
+        </button>
+      </div>
     </aside>
 
     <main class="tsa-main">
 
       <div class="tsa-controls-grid">
 
-        <div class="tsa-field tsa-date-mode-field" id="tsa-date-mode-field">
-          <label>Date Filter Type</label>
+        <div class="tsa-field tsa-date-mode-field">
+          <label>Game Date Filter Type</label>
           <div class="tsa-radio-row">
             <label><input type="radio" name="tsa-date-mode" value="single" checked> Single date</label>
             <label><input type="radio" name="tsa-date-mode" value="range"> Date range</label>
@@ -67,7 +93,7 @@
         </div>
 
         <div class="tsa-field" id="tsa-single-wrap" style="display:none;">
-          <label>Date</label>
+          <label>Game Date</label>
           <input id="tsa-date-single" type="date">
         </div>
 
@@ -81,7 +107,7 @@
           <input id="tsa-date-end" type="date">
         </div>
 
-        <div class="tsa-field" id="tsa-team-field">
+        <div class="tsa-field">
           <label>Team</label>
           <select id="tsa-team-filter" multiple placeholder="Choose teams..."></select>
         </div>
@@ -101,22 +127,8 @@
         </div>
 
         <div class="tsa-field">
-          <label>Search Player / Team</label>
-          <input id="tsa-search" type="text" placeholder="Search player, team, playerId...">
-        </div>
-
-        <div class="tsa-field" id="tsa-shot-region-field">
-          <label>Shot Region</label>
-          <select id="tsa-shot-region-filter">
-            <option value="">All</option>
-          </select>
-        </div>
-
-        <div class="tsa-field" id="tsa-shot-type-field">
-          <label>Shot Type</label>
-          <select id="tsa-shot-type-filter">
-            <option value="">All</option>
-          </select>
+          <label>Search Goalie</label>
+          <input id="tsa-search" type="text" placeholder="Search goalie...">
         </div>
 
         <div class="tsa-field">
@@ -147,6 +159,7 @@
       <div id="tsa-status" class="tsa-status loading">
         Loading dataset...
       </div>
+
       <div id="tsa-mobile-scroll-tip">Tip: Scroll horizontally to view all columns.</div>
       <div id="tsa-table"></div>
 

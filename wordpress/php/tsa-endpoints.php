@@ -4499,3 +4499,379 @@ function tsa_stream_shot_events_csv($request, $dataset) {
     fclose($out);
     exit;
 }
+
+
+
+function tsa_get_goalie_dataset_map() {
+    return [
+        'advanced' => 'tsa_goalie_advanced',
+        'bios' => 'tsa_goalie_bios',
+        'daysrest' => 'tsa_goalie_daysrest',
+        'penaltyshots' => 'tsa_goalie_penaltyshots',
+        'savesbystrength' => 'tsa_goalie_savesbystrength',
+        'shootout' => 'tsa_goalie_shootout',
+        'startedvsrelieved' => 'tsa_goalie_startedvsrelieved',
+        'summary' => 'tsa_goalie_summary',
+    ];
+}
+
+add_action('rest_api_init', function () {
+    foreach (tsa_get_goalie_dataset_map() as $dataset => $table_name) {
+        register_rest_route('tsa/v1', "/goalie-$dataset", [
+            'methods' => 'GET',
+            'callback' => function ($request) use ($dataset) {
+                return tsa_get_goalie_dataset($request, $dataset);
+            },
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route('tsa/v1', "/goalie-$dataset-meta", [
+            'methods' => 'GET',
+            'callback' => function ($request) use ($dataset) {
+                return tsa_get_goalie_date_meta($dataset);
+            },
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route('tsa/v1', "/goalie-$dataset-csv", [
+            'methods' => 'GET',
+            'callback' => function ($request) use ($dataset) {
+                return tsa_stream_goalie_csv($request, $dataset);
+            },
+            'permission_callback' => '__return_true',
+        ]);
+    }
+
+    register_rest_route('tsa/v1', '/goalie-team-options', [
+        'methods' => 'GET',
+        'callback' => 'tsa_get_goalie_team_options',
+        'permission_callback' => '__return_true',
+    ]);
+});
+
+function tsa_get_goalie_table_name($dataset) {
+    $map = tsa_get_goalie_dataset_map();
+
+    if (!isset($map[$dataset])) {
+        return null;
+    }
+
+    return $map[$dataset];
+}
+
+function tsa_get_goalie_allowed_columns($table) {
+    global $wpdb;
+
+    $columns = $wpdb->get_results("SHOW COLUMNS FROM `$table`", ARRAY_A);
+
+    return array_map(function ($col) {
+        return $col['Field'];
+    }, $columns);
+}
+
+function tsa_goalie_table_has_column($allowed_columns, $column) {
+    return in_array($column, $allowed_columns, true);
+}
+
+function tsa_apply_goalie_filters($request, $allowed_columns, &$where, &$params) {
+    global $wpdb;
+
+    $teams_raw = sanitize_text_field($request->get_param('teams'));
+    $opponents_raw = sanitize_text_field($request->get_param('opponents'));
+    $homeRoad = sanitize_text_field($request->get_param('homeRoad'));
+    $search = sanitize_text_field($request->get_param('search'));
+    $date_single = sanitize_text_field($request->get_param('date_single'));
+    $date_start = sanitize_text_field($request->get_param('date_start'));
+    $date_end = sanitize_text_field($request->get_param('date_end'));
+
+    if (!empty($teams_raw)) {
+        $teams = array_filter(array_map('trim', explode(',', $teams_raw)));
+
+        if (!empty($teams)) {
+            $placeholders = implode(',', array_fill(0, count($teams), '%s'));
+
+            if (tsa_goalie_table_has_column($allowed_columns, 'currentTeamAbbrev')) {
+                $where[] = "currentTeamAbbrev IN ($placeholders)";
+            } elseif (tsa_goalie_table_has_column($allowed_columns, 'teamAbbrev')) {
+                $where[] = "teamAbbrev IN ($placeholders)";
+            }
+
+            foreach ($teams as $team) {
+                $params[] = $team;
+            }
+        }
+    }
+
+    if (tsa_goalie_table_has_column($allowed_columns, 'opponentTeamAbbrev') && !empty($opponents_raw)) {
+        $opponents = array_filter(array_map('trim', explode(',', $opponents_raw)));
+
+        if (!empty($opponents)) {
+            $placeholders = implode(',', array_fill(0, count($opponents), '%s'));
+            $where[] = "opponentTeamAbbrev IN ($placeholders)";
+
+            foreach ($opponents as $opponent) {
+                $params[] = $opponent;
+            }
+        }
+    }
+
+    if (tsa_goalie_table_has_column($allowed_columns, 'homeRoad') && !empty($homeRoad)) {
+        $where[] = "homeRoad = %s";
+        $params[] = $homeRoad;
+    }
+
+    if (!empty($search)) {
+        $search = trim($search);
+        $like = '%' . $wpdb->esc_like($search) . '%';
+        $search_parts = [];
+
+        if (tsa_goalie_table_has_column($allowed_columns, 'goalieFullName')) {
+            $search_parts[] = "goalieFullName LIKE %s";
+            $params[] = $like;
+        }
+
+        if (tsa_goalie_table_has_column($allowed_columns, 'lastName')) {
+            $search_parts[] = "lastName LIKE %s";
+            $params[] = $like;
+        }
+
+        if (ctype_digit($search)) {
+            foreach (['playerId', 'gameId'] as $col) {
+                if (tsa_goalie_table_has_column($allowed_columns, $col)) {
+                    $search_parts[] = "CAST($col AS CHAR) LIKE %s";
+                    $params[] = $like;
+                }
+            }
+        }
+
+        if (!empty($search_parts)) {
+            $where[] = "(" . implode(" OR ", $search_parts) . ")";
+        }
+    }
+
+    if (tsa_goalie_table_has_column($allowed_columns, 'gameDate')) {
+        if (!empty($date_single)) {
+            $where[] = "gameDate = %s";
+            $params[] = $date_single;
+        } elseif (!empty($date_start) && !empty($date_end)) {
+            $where[] = "gameDate BETWEEN %s AND %s";
+            $params[] = $date_start;
+            $params[] = $date_end;
+        }
+    }
+}
+
+function tsa_get_goalie_dataset($request, $dataset) {
+    global $wpdb;
+
+    tsa_set_utf8mb4();
+
+    $table_name = tsa_get_goalie_table_name($dataset);
+
+    if (!$table_name) {
+        return new WP_Error('invalid_dataset', 'Invalid goalie dataset.', ['status' => 400]);
+    }
+
+    $table = $wpdb->prefix . $table_name;
+    $allowed_columns = tsa_get_goalie_allowed_columns($table);
+
+    $page = max(1, intval($request->get_param('page') ?: 1));
+    $size_param = $request->get_param('size') ?: $request->get_param('per_page') ?: 25;
+    $per_page = min(100, max(10, intval($size_param)));
+    $offset = ($page - 1) * $per_page;
+
+    $where = [];
+    $params = [];
+
+    tsa_apply_goalie_filters($request, $allowed_columns, $where, $params);
+
+    $where_sql = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+
+    $count_sql = "SELECT COUNT(*) FROM $table $where_sql";
+    $total = !empty($params)
+        ? intval($wpdb->get_var($wpdb->prepare($count_sql, ...$params)))
+        : intval($wpdb->get_var($count_sql));
+
+    $last_page = max(1, ceil($total / $per_page));
+
+    $sort_field = tsa_goalie_table_has_column($allowed_columns, 'gameDate')
+        ? 'gameDate'
+        : (tsa_goalie_table_has_column($allowed_columns, 'goalieFullName') ? 'goalieFullName' : $allowed_columns[0]);
+
+    $sort_dir = tsa_goalie_table_has_column($allowed_columns, 'gameDate') ? 'DESC' : 'ASC';
+
+    $sorters = $request->get_param('sort');
+
+    if (empty($sorters)) {
+        $sorters = $request->get_param('sorters');
+    }
+
+    if (is_string($sorters)) {
+        $decoded = json_decode($sorters, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $sorters = $decoded;
+        }
+    }
+
+    if (!empty($sorters) && is_array($sorters)) {
+        $first_sorter = $sorters[0] ?? null;
+
+        if (is_array($first_sorter)) {
+            if (!empty($first_sorter['field']) && in_array($first_sorter['field'], $allowed_columns, true)) {
+                $sort_field = $first_sorter['field'];
+            }
+
+            if (!empty($first_sorter['dir']) && strtolower($first_sorter['dir']) === 'asc') {
+                $sort_dir = 'ASC';
+            } else {
+                $sort_dir = 'DESC';
+            }
+        }
+    }
+
+    $order_sql = "ORDER BY `$sort_field` $sort_dir";
+
+    $data_sql = "SELECT *
+                 FROM $table
+                 $where_sql
+                 $order_sql
+                 LIMIT %d OFFSET %d";
+
+    $data_params = array_merge($params, [$per_page, $offset]);
+
+    $rows = $wpdb->get_results(
+        $wpdb->prepare($data_sql, ...$data_params),
+        ARRAY_A
+    );
+
+    return [
+        'data' => $rows,
+        'last_page' => $last_page,
+        'total' => $total,
+    ];
+}
+
+function tsa_get_goalie_date_meta($dataset) {
+    global $wpdb;
+
+    tsa_set_utf8mb4();
+
+    $table_name = tsa_get_goalie_table_name($dataset);
+
+    if (!$table_name) {
+        return new WP_Error('invalid_dataset', 'Invalid goalie dataset.', ['status' => 400]);
+    }
+
+    $table = $wpdb->prefix . $table_name;
+    $allowed_columns = tsa_get_goalie_allowed_columns($table);
+
+    if (!tsa_goalie_table_has_column($allowed_columns, 'gameDate')) {
+        return [
+            'min_date' => null,
+            'max_date' => null,
+        ];
+    }
+
+    return [
+        'min_date' => $wpdb->get_var("SELECT MIN(gameDate) FROM $table"),
+        'max_date' => $wpdb->get_var("SELECT MAX(gameDate) FROM $table"),
+    ];
+}
+
+function tsa_stream_goalie_csv($request, $dataset) {
+    global $wpdb;
+
+    tsa_set_utf8mb4();
+
+    $table_name = tsa_get_goalie_table_name($dataset);
+
+    if (!$table_name) {
+        wp_die('Invalid goalie dataset.');
+    }
+
+    $table = $wpdb->prefix . $table_name;
+    $allowed_columns = tsa_get_goalie_allowed_columns($table);
+
+    $full = intval($request->get_param('full')) === 1;
+
+    $where = [];
+    $params = [];
+
+    if (!$full) {
+        tsa_apply_goalie_filters($request, $allowed_columns, $where, $params);
+    }
+
+    $where_sql = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+
+    $order_col = tsa_goalie_table_has_column($allowed_columns, 'gameDate')
+        ? 'gameDate'
+        : (tsa_goalie_table_has_column($allowed_columns, 'goalieFullName') ? 'goalieFullName' : $allowed_columns[0]);
+
+    $order_dir = $order_col === 'gameDate' ? 'DESC' : 'ASC';
+
+    $sql = "SELECT * FROM $table $where_sql ORDER BY `$order_col` $order_dir";
+
+    $rows = !empty($params)
+        ? $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A)
+        : $wpdb->get_results($sql, ARRAY_A);
+
+    if (empty($rows)) {
+        wp_die('No rows found for selected filters.');
+    }
+
+    header('Content-Type: text/csv; charset=utf-8');
+
+    $filename = $full
+        ? "full_goalie_{$dataset}.csv"
+        : "filtered_goalie_{$dataset}.csv";
+
+    header("Content-Disposition: attachment; filename={$filename}");
+
+    echo "\xEF\xBB\xBF";
+
+    $out = fopen('php://output', 'w');
+
+    fputcsv($out, array_keys($rows[0]), ',', '"', '\\');
+
+    foreach ($rows as $row) {
+        fputcsv($out, $row, ',', '"', '\\');
+    }
+
+    fclose($out);
+    exit;
+}
+
+function tsa_get_goalie_team_options($request) {
+    global $wpdb;
+
+    tsa_set_utf8mb4();
+
+    $bios_table = $wpdb->prefix . 'tsa_goalie_bios';
+    $summary_table = $wpdb->prefix . 'tsa_goalie_summary';
+
+    $teams = $wpdb->get_col("
+        SELECT team FROM (
+            SELECT DISTINCT currentTeamAbbrev AS team
+            FROM $bios_table
+            WHERE currentTeamAbbrev <> ''
+
+            UNION
+
+            SELECT DISTINCT teamAbbrev AS team
+            FROM $summary_table
+            WHERE teamAbbrev <> ''
+
+            UNION
+
+            SELECT DISTINCT opponentTeamAbbrev AS team
+            FROM $summary_table
+            WHERE opponentTeamAbbrev <> ''
+        ) AS x
+        ORDER BY team
+    ");
+
+    return [
+        'teams' => $teams,
+        'opponents' => $teams,
+    ];
+}
