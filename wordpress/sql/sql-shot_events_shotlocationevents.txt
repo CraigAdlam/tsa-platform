@@ -32,7 +32,14 @@ CREATE TABLE wp_tsa_shot_events_shot_location_events (
     INDEX idx_playerId (playerId),
     INDEX idx_shooter (shooter),
     INDEX idx_homeRoad (homeRoad),
-    INDEX idx_shot_region (shot_region)
+    INDEX idx_shot_region (shot_region),
+    INDEX idx_date_team (date, teamAbbrev),
+    INDEX idx_date_homeRoad (date, homeRoad),
+    INDEX idx_date_shot_region (date, shot_region),
+    INDEX idx_date_shot_type (date, shotType),
+    INDEX idx_date_player (date, playerId),
+    INDEX idx_home_away_date (homeAbbrev, awayAbbrev, date),
+    INDEX idx_shotType (shotType)
 );
 
 DELETE FROM wp_tsa_shot_events_shot_location_events

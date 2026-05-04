@@ -1,0 +1,40 @@
+DROP TABLE IF EXISTS wp_tsa_goalie_daysrest;
+
+CREATE TABLE wp_tsa_goalie_daysrest (
+    gameDate DATE,
+    gameId BIGINT,
+    goalieFullName VARCHAR(150),
+    playerId BIGINT,
+    homeRoad VARCHAR(10),
+    teamAbbrev VARCHAR(10),
+    opponentTeamAbbrev VARCHAR(10),
+    shootsCatches VARCHAR(10),
+    gamesPlayed INT,
+    gamesStarted INT,
+    wins INT,
+    losses INT,
+    otLosses INT,
+    savePct DECIMAL(10,4),
+    gamesPlayedDaysRest0 INT,
+    gamesPlayedDaysRest1 INT,
+    gamesPlayedDaysRest2 INT,
+    gamesPlayedDaysRest3 INT,
+    gamesPlayedDaysRest4Plus INT,
+    savePctDaysRest0 DECIMAL(10,4),
+    savePctDaysRest1 DECIMAL(10,4),
+    savePctDaysRest2 DECIMAL(10,4),
+    savePctDaysRest3 DECIMAL(10,4),
+    savePctDaysRest4Plus DECIMAL(10,4),
+    lastName VARCHAR(100),
+
+    INDEX idx_gameDate (gameDate),
+    INDEX idx_gameId (gameId),
+    INDEX idx_playerId (playerId),
+    INDEX idx_teamAbbrev (teamAbbrev),
+    INDEX idx_opponentTeamAbbrev (opponentTeamAbbrev),
+    INDEX idx_homeRoad (homeRoad),
+    INDEX idx_goalieFullName (goalieFullName)
+);
+
+DELETE FROM wp_tsa_goalie_daysrest
+WHERE goalieFullName = 'goalieFullName';

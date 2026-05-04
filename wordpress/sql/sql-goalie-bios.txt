@@ -1,0 +1,37 @@
+DROP TABLE IF EXISTS wp_tsa_goalie_bios;
+
+CREATE TABLE wp_tsa_goalie_bios (
+    goalieFullName VARCHAR(150),
+    playerId BIGINT,
+    currentTeamAbbrev VARCHAR(10),
+    shootsCatches VARCHAR(10),
+    birthDate DATE,
+    birthCity VARCHAR(100),
+    birthStateProvinceCode VARCHAR(10),
+    birthCountryCode VARCHAR(10),
+    nationalityCode VARCHAR(10),
+    height INT,
+    weight INT,
+    draftYear INT,
+    draftRound INT,
+    draftOverall INT,
+    firstSeasonForGameType INT,
+    isInHallOfFameYn VARCHAR(5),
+    gamesPlayed INT,
+    wins INT,
+    losses INT,
+    ties INT,
+    otLosses INT,
+    shutouts INT,
+    lastName VARCHAR(100),
+
+    INDEX idx_playerId (playerId),
+    INDEX idx_goalieFullName (goalieFullName),
+    INDEX idx_currentTeamAbbrev (currentTeamAbbrev),
+    INDEX idx_shootsCatches (shootsCatches),
+    INDEX idx_birthCountryCode (birthCountryCode),
+    INDEX idx_nationalityCode (nationalityCode)
+);
+
+DELETE FROM wp_tsa_goalie_bios
+WHERE goalieFullName = 'goalieFullName';

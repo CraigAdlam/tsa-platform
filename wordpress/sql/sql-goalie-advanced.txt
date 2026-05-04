@@ -1,0 +1,40 @@
+DROP TABLE IF EXISTS wp_tsa_goalie_advanced;
+
+CREATE TABLE wp_tsa_goalie_advanced (
+    gameDate DATE,
+    gameId BIGINT,
+    goalieFullName VARCHAR(150),
+    playerId BIGINT,
+    homeRoad VARCHAR(10),
+    teamAbbrev VARCHAR(10),
+    opponentTeamAbbrev VARCHAR(10),
+    shootsCatches VARCHAR(10),
+    gamesPlayed INT,
+    gamesStarted INT,
+    completeGames INT,
+    incompleteGames INT,
+    completeGamePct DECIMAL(10,4),
+    qualityStart INT,
+    qualityStartsPct DECIMAL(10,4),
+    goalsFor INT,
+    goalsAgainst INT,
+    goalsForAverage DECIMAL(10,4),
+    goalsAgainstAverage DECIMAL(10,4),
+    regulationWins INT,
+    regulationLosses INT,
+    shotsAgainstPer60 DECIMAL(10,4),
+    savePct DECIMAL(10,4),
+    timeOnIce INT,
+    lastName VARCHAR(100),
+
+    INDEX idx_gameDate (gameDate),
+    INDEX idx_gameId (gameId),
+    INDEX idx_playerId (playerId),
+    INDEX idx_teamAbbrev (teamAbbrev),
+    INDEX idx_opponentTeamAbbrev (opponentTeamAbbrev),
+    INDEX idx_homeRoad (homeRoad),
+    INDEX idx_goalieFullName (goalieFullName)
+);
+
+DELETE FROM wp_tsa_goalie_advanced
+WHERE goalieFullName = 'goalieFullName';
