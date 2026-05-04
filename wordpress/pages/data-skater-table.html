@@ -1,49 +1,49 @@
 <link href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
 
-<nav class="tsa-data-tabs" aria-label="Top Shelf Analytics data pages">
-  <a href="/nhl-data-hub/">Data Hub</a>
-  <a class="active" href="/data-skater-table/">Skater Data</a>
-  <a href="/data-team-table/">Team Data</a>
-  <a href="/data-shot-events-table/">Shot Events</a>
-  <a href="/data-goalie-table/">Goalie Data</a>
-</nav>
-
-<div class="tsa-helper-text">
-  Use the Datasets menu below to browse, filter, and download NHL data.
-</div>
-
-<details class="tsa-dataset-notes">
-  <summary>About these datasets & columns</summary>
-
-  <p>
-    All columns reflect raw NHL data, with the exception of
-    <code>teamAbbrev</code>, which is added during the publish process for
-    consistency across datasets. For example, in <code>Summary Shooting</code>,
-    <code>teamAbbrev</code> is derived by joining on <code>gameId</code> and
-    <code>playerId</code> with <code>Skater Summary</code>.
-  </p>
-  
-  <p>
-    This standardized field ensures consistent team identification across datasets and supports
-    filtering, grouping, and downstream analysis workflows.
-  </p>
-
-  <p>
-    These datasets can support historical analysis, dashboards, and custom
-    predictive modeling workflows.
-  </p>
-
-  <p>
-    Source data may be revised or updated over time.
-  </p>
-</details>
-
-<div id="tsa-last-updated" class="tsa-last-updated">
-  Skater data updated: Loading...
-</div>
-
 <div id="tsa-table-wrap">
+
+  <nav class="tsa-data-tabs" aria-label="Top Shelf Analytics data pages">
+    <a href="/nhl-data-hub/">Data Hub</a>
+    <a class="active" href="/data-skater-table/">Skater Data</a>
+    <a href="/data-team-table/">Team Data</a>
+    <a href="/data-shot-events-table/">Shot Events</a>
+    <a href="/data-goalie-table/">Goalie Data</a>
+  </nav>
+
+  <div class="tsa-helper-text">
+    Use the Datasets menu below to browse, filter, and download NHL data.
+  </div>
+
+  <details class="tsa-dataset-notes">
+    <summary>About these datasets & columns</summary>
+
+    <p>
+      All columns reflect raw NHL data, with the exception of
+      <code>teamAbbrev</code>, which is added during the publish process for
+      consistency across datasets. For example, in <code>Summary Shooting</code>,
+      <code>teamAbbrev</code> is derived by joining on <code>gameId</code> and
+      <code>playerId</code> with <code>Skater Summary</code>.
+    </p>
+
+    <p>
+      This standardized field ensures consistent team identification across datasets and supports
+      filtering, grouping, and downstream analysis workflows.
+    </p>
+
+    <p>
+      These datasets can support historical analysis, dashboards, and custom
+      predictive modeling workflows.
+    </p>
+
+    <p>
+      Source data may be revised or updated over time.
+    </p>
+  </details>
+
+  <div id="tsa-last-updated" class="tsa-last-updated">
+    Skater data updated: Loading...
+  </div>
 
   <div class="tsa-layout">
 
